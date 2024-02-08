@@ -1,4 +1,5 @@
 import logging
+import json
 import requests
 import os
 import sys
@@ -68,16 +69,12 @@ logger = logging.getLogger()
 ## Loads environment variables
 load_dotenv()
 logger.debug("Loaded dotenv")
-alma_asiapacific = os.getenv("alma_asiapacific")
-alma_bibs = os.getenv("alma_bibs")
 # One MMS id as a string
-mms_id = os.getenv("mms_id")
+mms_id = os.getenv("MMS_ID")
 ## Must be a list of ids separated by commas.
-mms_ids_small = os.getenv("mms_ids")
-mms_ids_large = os.getenv("mms_ids_large")  # 493 ids
-mms_ids_medium = os.getenv("mms_ids_medium")  # 101 ids
-key = os.getenv("sandbox_key")
-network = "other_system_id"
+mms_ids = os.getenv("MMS_IDS")
+
+key = os.getenv("KEY")
 logger.debug("Loaded environment variables")
 
 """
@@ -91,18 +88,18 @@ The chunk_identifiers function will break string of identifiers into batches of 
 
 A single call can find an IE by setting the key in the query param to "other_system_id" 
 """
-identifier_batches = chunk_identifiers(mms_ids_large)
+identifier_batches = chunk_identifiers(mms_ids)
 print(
     "Number of queries required to get all bibs: " + str(len(identifier_batches.keys()))
 )
-baseurl = "".join((alma_asiapacific, alma_bibs))
+baseurl = "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/"
 headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
 logger.debug("Testing chunk of mms ids")
 # query = {network: "IE"}
 
 ## Queries the API and saves the response to api_call
-for key in identifier_batches:
-    query = {"mms_id": identifier_batches.get(key)}
+for item in identifier_batches:
+    query = {"mms_id": identifier_batches.get(item)}
     api_call = requests.get(baseurl, params=query, headers=headers)
     logger.debug("API GET request sent")
     logger.debug(api_call)
@@ -121,10 +118,15 @@ for key in identifier_batches:
     else:
         print("OK")
         api_volume_check(api_call)
+
+        data = api_call.json()
+
+        json_str = json.dumps(data, indent=4)
+
         ## Write record to file
         try:
-            file = open(f"api-records-json-group-{key}.txt", "w")
-            file.write(api_call.text)
+            file = open(f"api-records-json-group-{item}.txt", "w")
+            file.write(json_str)
             logger.debug("output to file")
         except Exception as e:
             logger.debug(f"Error occured: {e}")
