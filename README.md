@@ -8,6 +8,17 @@ A Code Club project to create some tools to help clean-up metadata in the Librar
 
         Use this space to track additional libraries relied on in the code.
 
+
+### Api call  
+
+- [logging](https://docs.python.org/3/library/logging.html)
+- [requests](https://requests.readthedocs.io/en/latest/)
+- [os](https://docs.python.org/3/library/os.html)
+- [sys](https://docs.python.org/3/library/sys.html)
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
+
+Requires a `.env` file containing local variables. 
+
 ## Deliverables
 
 - Alma API call
