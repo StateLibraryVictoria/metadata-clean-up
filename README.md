@@ -11,13 +11,19 @@ A Code Club project to create some tools to help clean-up metadata in the Librar
 
 ### Api call  
 
+- [json](https://docs.python.org/3/library/json.html)
 - [logging](https://docs.python.org/3/library/logging.html)
-- [requests](https://requests.readthedocs.io/en/latest/)
 - [os](https://docs.python.org/3/library/os.html)
+- [pipenv](https://pipenv.pypa.io/en/latest/)
+- [pytest](https://docs.pytest.org/en/8.0.x/)
+- [requests](https://requests.readthedocs.io/en/latest/)
 - [sys](https://docs.python.org/3/library/sys.html)
-- [python-dotenv](https://pypi.org/project/python-dotenv/)
 
 Requires a `.env` file containing local variables. 
+
+### Future scripts  
+
+- [pymarc](https://pymarc.readthedocs.io/en/latest/)
 
 ## Deliverables
 
