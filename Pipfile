@@ -8,5 +8,6 @@ pymarc = "*"
 requests = "*"
 lxml = "*"
 pytest = "*"
+black = "*"
 
 [dev-packages]
