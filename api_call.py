@@ -183,10 +183,15 @@ logger.debug("Loaded environment variables")
 API_CALL_LIMIT = 10000
 BASEURL = "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/"
 
-# To do:
-## Rewrite the method using the defined functions.
-## Such that the iteration is separated from the functions defined above.
 
+"""
+Main program
+Generates the list of ids from the original string.
+Generates the dictionary of chunks from the list.
+
+Checks if the API key is valid, then iterates through the chunks.
+Each API response is parsed from josn, then written to a file in a subfolder titled json.
+"""
 list_ids = split_identifiers(MMS_IDS)
 chunked_calls = chunk_identifiers(list_ids)
 
