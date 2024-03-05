@@ -1,5 +1,6 @@
 import json
 import logging
+from os import getenv
 from logger_config import *
 
 debug_log_config("extract-xml")
@@ -21,8 +22,8 @@ def get_record(json_file):
     return records
 
 
-file = "api-records-json-group-9939772237507636.txt"
-opened = open(file, "r")
+FILE = getenv("JSON_RECORD")
+opened = open(FILE, "r", encoding="utf-8", errors="backslashreplace")
 read = opened.read()
 
 try:
@@ -32,6 +33,6 @@ except Exception as e:
     logger.error(f"Error loading records: {e}")
 
 for key in records:
-    file = open(f"record_{key}.xml", "w")
+    file = open(f"record_{key}.xml", "w", encoding="utf-8", errors="backslashreplace")
     file.write(records[key][0])
     file.close()
