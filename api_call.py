@@ -150,7 +150,7 @@ def output_bib_files(dir, part, input):
     today = datetime.now().strftime("%Y%m%d%H%M00")
     filename = os.path.join(dir, f"{today}_records_batch_{part}.json")
     try:
-        file = open(filename, "w")
+        file = open(filename, "w", encoding='utf-8', errors='backslashreplace')
         file.write(input)
         logger.debug("output to file")
         file.close()
