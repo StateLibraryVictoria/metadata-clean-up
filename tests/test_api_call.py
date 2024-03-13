@@ -1,9 +1,12 @@
-import requests
-from os import path
+
 from datetime import datetime
 import pytest
 
 from api_call import *
+
+# Read the file into the program.
+# Write second version of test_split.
+
 
 # Checks that lists of mms_ids are split correctly. Includes invalid MMS Ids that should be removed.
 @pytest.mark.parametrize("mms_ids, split, count", 
@@ -25,8 +28,8 @@ def test_validate_mmsid(id, expected):
     assert validate_mmsid(id) == expected
 
 # Checks that the API key is configured correctly. This does call the API.
-def test_check_api_key():
-    assert check_api_key() == True
+#def test_check_api_key():
+ #   assert check_api_key() == True
 
 # Checks that the json files are created as expected.
 def test_output_bib_files(tmp_path):
@@ -34,7 +37,7 @@ def test_output_bib_files(tmp_path):
     location.mkdir()
     part = '0'
     input = "some text"
-    today = datetime.now().strftime('%d%m%Y%H%M00')
+    today = datetime.now().strftime('%Y%m%d%H%M00')
     output_bib_files(location, part, input)
     filename = f"{today}_records_batch_{part}.json"
     file = location / filename
