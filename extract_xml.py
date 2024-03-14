@@ -7,8 +7,6 @@ debug_log_config("extract-xml")
 logger = logging.getLogger()
 
 
-
-
 """
 Input: json file
 Processing: json.loads(file) converts ASCII backslash replaced characters with UTF-8.
@@ -34,9 +32,10 @@ Output: filestream.
 
 
 def open_files(filename):
-    file = open(filename, "r", encoding='utf-8', errors='backslashreplace')
+    file = open(filename, "r", encoding="utf-8", errors="backslashreplace")
     file_loaded = file.read()
     return file_loaded
+
 
 """
 Input: dictionary with mms id keys and xml records.
@@ -44,12 +43,19 @@ Output: Record to file in ./output/xml
 
 """
 
+
 def write_records(dictionary, output_dir):
     for key in dictionary:
-        file = open(path.join(output_dir,f"record_{key}.xml"), "w", encoding="utf-8", errors="backslashreplace")
+        file = open(
+            path.join(output_dir, f"record_{key}.xml"),
+            "w",
+            encoding="utf-8",
+            errors="backslashreplace",
+        )
         file.write(dictionary[key][0])
         logger.debug(f"Created file for record: {key}")
         file.close()
+
 
 """
 Input: directory where the files are held.
@@ -78,26 +84,30 @@ def iterate_directory(dir_name, output_dir):
                 break
         return True
 
+
 """
 Input: Dictionary containing MMS Id, xml record pairs.
 Processing: Replace utf-16 with utf-8 in header.
 Output: Transformed dictionary
 """
+
+
 def fix_header_encoding(dictionary):
     for key in dictionary:
         string = dictionary[key][0]
-        string = string.replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "")
+        string = string.replace('<?xml version="1.0" encoding="UTF-16"?>', "")
         dictionary[key][0] = string
     return dictionary
 
-## Test file 
-#FILE = getenv("JSON_RECORD")
-#json_request = open(FILE), "r", encoding="utf-8", errors="backslashreplace")
-#json_loaded = json_request.read()
+
+## Test file
+# FILE = getenv("JSON_RECORD")
+# json_request = open(FILE), "r", encoding="utf-8", errors="backslashreplace")
+# json_loaded = json_request.read()
 
 # Main call:
 source_directory = path.join("json")
 logger.debug(f"Source: {source_directory}")
-output_directory = path.join("output","xml")
+output_directory = path.join("output", "xml")
 logger.debug(f"output: {output_directory}")
 iterate_directory(source_directory, output_directory)
