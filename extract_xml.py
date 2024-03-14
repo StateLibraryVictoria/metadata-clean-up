@@ -6,6 +6,9 @@ from logger_config import *
 debug_log_config("extract-xml")
 logger = logging.getLogger()
 
+
+
+
 """
 Input: json file
 Processing: json.loads(file) converts ASCII backslash replaced characters with UTF-8.
@@ -31,7 +34,7 @@ Output: filestream.
 
 
 def open_files(filename):
-    file = open(filename, "r", encoding="ascii", errors="backslashreplace")
+    file = open(filename, "r", encoding='utf-8', errors='backslashreplace')
     file_loaded = file.read()
     return file_loaded
 
@@ -83,7 +86,7 @@ Output: Transformed dictionary
 def fix_header_encoding(dictionary):
     for key in dictionary:
         string = dictionary[key][0]
-        string = string.replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        string = string.replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "")
         dictionary[key][0] = string
     return dictionary
 
