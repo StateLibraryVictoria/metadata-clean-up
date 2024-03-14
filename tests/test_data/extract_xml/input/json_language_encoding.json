@@ -1,0 +1,125 @@
+{
+    "bib": [
+        {
+            "mms_id": "9938036653607636",
+            "record_format": "marc21",
+            "linked_record_id": {},
+            "title": "Qing chun wu qi tu xing = Butterfly /",
+            "author": "Hartnett, Sonya,",
+            "isbn": "986595690X",
+            "complete_edition": "Chu ban.",
+            "network_number": [
+                "(Voyager)3803665-slvdb-Voyager",
+                "(OCoLC)891462638",
+                "3803665",
+                "(AuCNLKIN)000053423201"
+            ],
+            "place_of_publication": "Taibei Shi",
+            "date_of_publication": "\u00a92014",
+            "publisher_const": "Man you zhe wen hua shi ye gu fen you xian gong si,",
+            "holdings": {
+                "link": "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/9938036653607636/holdings"
+            },
+            "created_by": "import",
+            "created_date": "2022-08-08Z",
+            "last_modified_by": "System",
+            "last_modified_date": "2023-10-20Z",
+            "suppress_from_publishing": "false",
+            "suppress_from_external_search": "false",
+            "suppress_from_metadoor": "false",
+            "rank": "95",
+            "sync_with_oclc": "BIBS",
+            "sync_with_libraries_australia": "BIBS",
+            "originating_system": "OTHER",
+            "originating_system_id": "3803665-slvdb",
+            "brief_level": {
+                "value": "01",
+                "desc": "01"
+            },
+            "anies": [
+                "<?xml version=\"1.0\" encoding=\"UTF-16\"?><record><leader>01964cam a2200553Mi 4500</leader><controlfield tag=\"001\">9938036653607636</controlfield><controlfield tag=\"005\">20230105150124.0</controlfield><controlfield tag=\"008\">140623t20142014ch            000 1 chi  </controlfield><datafield ind1=\" \" ind2=\" \" tag=\"020\"><subfield code=\"a\">9789865956905</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"020\"><subfield code=\"a\">986595690X</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(AuCNLKIN)000053423201</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">3803665</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(OCoLC)891462638</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(Voyager)3803665-slvdb-Voyager</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"040\"><subfield code=\"a\">AU@</subfield><subfield code=\"b\">eng</subfield><subfield code=\"c\">AU@</subfield><subfield code=\"e\">rda</subfield><subfield code=\"d\">OCLCO</subfield><subfield code=\"d\">OCLCF</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"041\"><subfield code=\"a\">chi</subfield><subfield code=\"h\">eng</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"042\"><subfield code=\"a\">anuc</subfield></datafield><datafield ind1=\"0\" ind2=\"4\" tag=\"082\"><subfield code=\"a\">823.3</subfield><subfield code=\"2\">23</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"100\"><subfield code=\"a\">Hartnett, Sonya,</subfield><subfield code=\"d\">1968-</subfield><subfield code=\"e\">author.</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"240\"><subfield code=\"a\">Butterfly.</subfield><subfield code=\"l\">Chinese</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"245\"><subfield code=\"6\">880-01</subfield><subfield code=\"a\">Qing chun wu qi tu xing =</subfield><subfield code=\"b\">Butterfly /</subfield><subfield code=\"c\">Suoniya Hatenai (Sonya Hartnett) zhu ; Li Jingyi yi.</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"880\"><subfield code=\"6\">245-01</subfield><subfield code=\"a\">\u9752\u6625\u7121\u671f\u5f92\u5211 =</subfield><subfield code=\"b\">Butterfly /</subfield><subfield code=\"c\">\u7d22\u59ae\u96c5\u00b7\u54c8\u7279\u5948 (Sonya Hartnett) \u8457 ; \u674e\u975c\u5b9c\u8b6f.</subfield></datafield><datafield ind1=\"3\" ind2=\"1\" tag=\"246\"><subfield code=\"a\">Butterfly</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"250\"><subfield code=\"6\">880-02</subfield><subfield code=\"a\">Chu ban.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"880\"><subfield code=\"6\">250-02</subfield><subfield code=\"a\">\u521d\u7248.</subfield></datafield><datafield ind1=\" \" ind2=\"4\" tag=\"264\"><subfield code=\"c\">\u00a92014</subfield></datafield><datafield ind1=\" \" ind2=\"1\" tag=\"264\"><subfield code=\"6\">880-03</subfield><subfield code=\"a\">Taibei Shi</subfield><subfield code=\"b\">Man you zhe wen hua shi ye gu fen you xian gong si,</subfield><subfield code=\"c\">2014.</subfield></datafield><datafield ind1=\" \" ind2=\"1\" tag=\"880\"><subfield code=\"6\">264-03</subfield><subfield code=\"a\">\u53f0\u5317\u5e02</subfield><subfield code=\"b\">\u6f2b\u904a\u8005\u6587\u5316\u4e8b\u696d\u80a1\u4efd\u6709\u9650\u516c\u53f8,</subfield><subfield code=\"c\">2014.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"300\"><subfield code=\"a\">250 pages ;</subfield><subfield code=\"c\">21 cm.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"336\"><subfield code=\"a\">text</subfield><subfield code=\"2\">rdacontent</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"337\"><subfield code=\"a\">unmediated</subfield><subfield code=\"2\">rdamedia</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"338\"><subfield code=\"a\">volume</subfield><subfield code=\"2\">rdacarrier</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"490\"><subfield code=\"6\">880-04</subfield><subfield code=\"a\">Xiao shuo =</subfield><subfield code=\"a\">Fiction ;</subfield><subfield code=\"v\">4003</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"880\"><subfield code=\"6\">490-04</subfield><subfield code=\"a\">\u5c0f\u8aaa =</subfield><subfield code=\"a\">Fiction ;</subfield><subfield code=\"v\">4003</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"500\"><subfield code=\"a\">Translation of : Butterfly.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"590\"><subfield code=\"a\">Donated by Sonya Hartnett, 2015.</subfield></datafield><datafield ind1=\" \" ind2=\"0\" tag=\"650\"><subfield code=\"a\">Teenage girls</subfield><subfield code=\"v\">Fiction.</subfield></datafield><datafield ind1=\" \" ind2=\"0\" tag=\"650\"><subfield code=\"a\">Female friendship</subfield><subfield code=\"v\">Fiction.</subfield></datafield><datafield ind1=\" \" ind2=\"7\" tag=\"650\"><subfield code=\"a\">Female friendship.</subfield><subfield code=\"2\">fast</subfield><subfield code=\"0\">(OCoLC)fst00922609</subfield></datafield><datafield ind1=\" \" ind2=\"7\" tag=\"650\"><subfield code=\"a\">Teenage girls.</subfield><subfield code=\"2\">fast</subfield><subfield code=\"0\">(OCoLC)fst01145412</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"653\"><subfield code=\"a\">Australian</subfield></datafield><datafield ind1=\" \" ind2=\"7\" tag=\"655\"><subfield code=\"a\">Fiction.</subfield><subfield code=\"2\">fast</subfield><subfield code=\"0\">(OCoLC)fst01423787</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"700\"><subfield code=\"6\">880-05</subfield><subfield code=\"a\">Li, Jingyi,</subfield><subfield code=\"e\">translator.</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"880\"><subfield code=\"6\">700-05</subfield><subfield code=\"a\">\u674e\u975c\u5b9c,</subfield><subfield code=\"e\">translator.</subfield></datafield><datafield ind1=\" \" ind2=\"0\" tag=\"830\"><subfield code=\"6\">880-06</subfield><subfield code=\"a\">Xiao shuo ;</subfield><subfield code=\"v\">4003.</subfield></datafield><datafield ind1=\" \" ind2=\"0\" tag=\"880\"><subfield code=\"6\">830-06</subfield><subfield code=\"a\">\u5c0f\u8aaa ;</subfield><subfield code=\"v\">4003.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"947\"><subfield code=\"a\">30328116100644</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"949\"><subfield code=\"j\">RARE</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"984\"><subfield code=\"a\">VSL</subfield><subfield code=\"c\">held</subfield></datafield></record>"
+            ]
+        },
+        {
+            "mms_id": "9938036613607636",
+            "record_format": "marc21",
+            "linked_record_id": {},
+            "title": "Gos\u016dt'\u016d ch'aild\u016d = The ghost's child /",
+            "author": "Hartnett, Sonya,",
+            "isbn": "8983923512",
+            "complete_edition": "Cho'p'an.",
+            "network_number": [
+                "(Voyager)3803661-slvdb-Voyager",
+                "(OCoLC)680384293",
+                "3803661",
+                "(AuCNLKIN)000072588151"
+            ],
+            "place_of_publication": "P'aju :",
+            "date_of_publication": "2010.",
+            "publisher_const": "Munhaksuch'\u014fb,",
+            "holdings": {
+                "link": "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/9938036613607636/holdings"
+            },
+            "created_by": "import",
+            "created_date": "2022-08-08Z",
+            "last_modified_by": "System",
+            "last_modified_date": "2023-10-19Z",
+            "suppress_from_publishing": "false",
+            "suppress_from_external_search": "false",
+            "suppress_from_metadoor": "false",
+            "rank": "78",
+            "sync_with_oclc": "BIBS",
+            "sync_with_libraries_australia": "BIBS",
+            "originating_system": "OTHER",
+            "originating_system_id": "3803661-slvdb",
+            "brief_level": {
+                "value": "01",
+                "desc": "01"
+            },
+            "anies": [
+                "<?xml version=\"1.0\" encoding=\"UTF-16\"?><record><leader>01481cam a2200433Ma 4500</leader><controlfield tag=\"001\">9938036613607636</controlfield><controlfield tag=\"005\">20230110130056.0</controlfield><controlfield tag=\"008\">101010s2010    ko a   e      000 1 kor  </controlfield><datafield ind1=\" \" ind2=\" \" tag=\"020\"><subfield code=\"a\">9788983923516</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"020\"><subfield code=\"a\">8983923512</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(AuCNLKIN)000072588151</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">3803661</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(OCoLC)680384293</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(Voyager)3803661-slvdb-Voyager</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"040\"><subfield code=\"a\">AU@</subfield><subfield code=\"b\">eng</subfield><subfield code=\"c\">AU@</subfield><subfield code=\"d\">OCLCQ</subfield><subfield code=\"d\">OCLCF</subfield><subfield code=\"d\">OCLCO</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"041\"><subfield code=\"a\">kor</subfield><subfield code=\"h\">eng</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"100\"><subfield code=\"a\">Hartnett, Sonya,</subfield><subfield code=\"d\">1968-</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"240\"><subfield code=\"a\">Ghost's child.</subfield><subfield code=\"l\">Korean</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"245\"><subfield code=\"6\">880-01</subfield><subfield code=\"a\">Gos\u016dt'\u016d ch'aild\u016d =</subfield><subfield code=\"b\">The ghost's child /</subfield><subfield code=\"c\">Sonya Hat'\u016dnes ; Kim \u016dn-ky\u014fng omgim.</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"880\"><subfield code=\"6\">245-01</subfield><subfield code=\"a\">\uace0\uc2a4\ud2b8 \ucc28\uc77c\ub4dc =</subfield><subfield code=\"b\">The ghost's child /</subfield><subfield code=\"c\">\uc18c\ub0d0 \ud558\ud2b8\ub137 ; \uae40\uc740\uacbd \uc62e\uae40.</subfield></datafield><datafield ind1=\"3\" ind2=\"1\" tag=\"246\"><subfield code=\"a\">Ghost's child</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"250\"><subfield code=\"6\">880-02</subfield><subfield code=\"a\">Cho'p'an.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"880\"><subfield code=\"6\">250-02</subfield><subfield code=\"a\">\ucd08\ud310.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"260\"><subfield code=\"6\">880-03</subfield><subfield code=\"a\">P'aju :</subfield><subfield code=\"b\">Munhaksuch'\u014fb,</subfield><subfield code=\"c\">2010.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"880\"><subfield code=\"6\">260-03</subfield><subfield code=\"a\">\ud30c\uc8fc :</subfield><subfield code=\"b\">\ubb38\ud559\uc218\ucca9,</subfield><subfield code=\"c\">2010.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"300\"><subfield code=\"a\">223 pages :</subfield><subfield code=\"b\">illustrations ;</subfield><subfield code=\"c\">20 cm</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"336\"><subfield code=\"a\">text</subfield><subfield code=\"b\">txt</subfield><subfield code=\"2\">rdacontent</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"337\"><subfield code=\"a\">unmediated</subfield><subfield code=\"b\">n</subfield><subfield code=\"2\">rdamedia</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"338\"><subfield code=\"a\">volume</subfield><subfield code=\"b\">nc</subfield><subfield code=\"2\">rdacarrier</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"500\"><subfield code=\"a\">Translation of: The ghost's child.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"546\"><subfield code=\"a\">In Korean.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"590\"><subfield code=\"a\">Donated by Sonya Hartnett, 2015.</subfield></datafield><datafield ind1=\" \" ind2=\"7\" tag=\"655\"><subfield code=\"a\">Fantasy fiction.</subfield><subfield code=\"2\">lcgft</subfield></datafield><datafield ind1=\" \" ind2=\"7\" tag=\"655\"><subfield code=\"a\">Fantasy fiction.</subfield><subfield code=\"2\">fast</subfield><subfield code=\"0\">(OCoLC)fst01726607</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"700\"><subfield code=\"6\">880-04</subfield><subfield code=\"a\">Kim, \u016dn-ky\u014fng.</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"880\"><subfield code=\"6\">700-04</subfield><subfield code=\"a\">\uae40\uc740\uacbd.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"947\"><subfield code=\"a\">30328116100602</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"949\"><subfield code=\"j\">RARE</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"984\"><subfield code=\"a\">VSL</subfield><subfield code=\"c\">held</subfield></datafield></record>"
+            ]
+        },
+        {
+            "mms_id": "9938164143607636",
+            "record_format": "marc21",
+            "linked_record_id": {},
+            "title": "Guldgossar /",
+            "author": "Hartnett, Sonya,",
+            "isbn": "9789186095659",
+            "complete_edition": "F\u00f6rsta svenska utg\u00e5van.",
+            "network_number": [
+                "(Voyager)3816414-slvdb-Voyager",
+                "3816414",
+                "(AuCNLKIN)000065373360",
+                "(OCoLC)1104821445"
+            ],
+            "place_of_publication": "Ume\u00e5 :",
+            "date_of_publication": "2016.",
+            "publisher_const": "Atrium,",
+            "holdings": {
+                "link": "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/9938164143607636/holdings"
+            },
+            "created_by": "import",
+            "created_date": "2022-08-08Z",
+            "last_modified_by": "System",
+            "last_modified_date": "2023-10-19Z",
+            "suppress_from_publishing": "false",
+            "suppress_from_external_search": "false",
+            "suppress_from_metadoor": "false",
+            "rank": "69",
+            "sync_with_oclc": "BIBS",
+            "sync_with_libraries_australia": "BIBS",
+            "originating_system": "OTHER",
+            "originating_system_id": "3816414-slvdb",
+            "brief_level": {
+                "value": "01",
+                "desc": "01"
+            },
+            "anies": [
+                "<?xml version=\"1.0\" encoding=\"UTF-16\"?><record><leader>00996cam a2200325 i 4500</leader><controlfield tag=\"001\">9938164143607636</controlfield><controlfield tag=\"005\">20230106105026.0</controlfield><controlfield tag=\"008\">190618t20162016sw a   j      000 1 swe d</controlfield><datafield ind1=\" \" ind2=\" \" tag=\"020\"><subfield code=\"a\">9789186095659</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(OCoLC)1104821445</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(AuCNLKIN)000065373360</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">3816414</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"035\"><subfield code=\"a\">(Voyager)3816414-slvdb-Voyager</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"040\"><subfield code=\"a\">ANL</subfield><subfield code=\"b\">eng</subfield><subfield code=\"e\">rda</subfield><subfield code=\"d\">ANL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield><subfield code=\"d\">VSL</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"041\"><subfield code=\"a\">swe</subfield><subfield code=\"h\">eng</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"042\"><subfield code=\"a\">anuc</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"100\"><subfield code=\"a\">Hartnett, Sonya,</subfield><subfield code=\"d\">1968-</subfield><subfield code=\"e\">author.</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"240\"><subfield code=\"a\">Golden boys.</subfield><subfield code=\"l\">Swedish</subfield></datafield><datafield ind1=\"1\" ind2=\"0\" tag=\"245\"><subfield code=\"a\">Guldgossar /</subfield><subfield code=\"c\">Sonya Hartnett ; \u00f6vers\u00e4ttning, Helena Ridelberg.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"250\"><subfield code=\"a\">F\u00f6rsta svenska utg\u00e5van.</subfield></datafield><datafield ind1=\" \" ind2=\"1\" tag=\"264\"><subfield code=\"a\">Ume\u00e5 :</subfield><subfield code=\"b\">Atrium,</subfield><subfield code=\"c\">2016.</subfield></datafield><datafield ind1=\" \" ind2=\"3\" tag=\"264\"><subfield code=\"a\">Halmstad :</subfield><subfield code=\"b\">Tryckt av Bulls Graphics AB.</subfield></datafield><datafield ind1=\" \" ind2=\"4\" tag=\"264\"><subfield code=\"a\">\u00a92016.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"300\"><subfield code=\"a\">286 pages ;</subfield><subfield code=\"c\">22 cm.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"336\"><subfield code=\"a\">text</subfield><subfield code=\"2\">rdacontent</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"337\"><subfield code=\"a\">unmediated</subfield><subfield code=\"2\">rdamedia</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"338\"><subfield code=\"a\">volume</subfield><subfield code=\"2\">rdacarrier</subfield></datafield><datafield ind1=\"1\" ind2=\" \" tag=\"700\"><subfield code=\"a\">Ridelberg, Helena,</subfield><subfield code=\"d\">1957-</subfield><subfield code=\"e\">translator.</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"949\"><subfield code=\"j\">RARE</subfield></datafield><datafield ind1=\" \" ind2=\" \" tag=\"984\"><subfield code=\"a\">VSL</subfield><subfield code=\"c\">held</subfield></datafield></record>"
+            ]
+        }
+    ],
+    "total_record_count": 3
+}
