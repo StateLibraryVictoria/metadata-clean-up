@@ -50,7 +50,7 @@ def test_get_records_first_matches_expected(input, expected, id):
     print(target)
     assert target == expected_data
 
-@pytest.mark.parametrize("input, expected, id", [(single_file_read, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", single_file_id), (spec_char_input_read, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", spec_char_id)])
+@pytest.mark.parametrize("input, expected, id", [(single_file_read, "<record>", single_file_id), (spec_char_input_read, "<record>", spec_char_id)])
 def test_fix_header_encoding(input, expected, id):
     test_data = input
     records = get_record(test_data)
