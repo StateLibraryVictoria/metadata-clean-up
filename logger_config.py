@@ -1,4 +1,6 @@
 import logging
+from os import path
 
 def debug_log_config(name):
-    logging.basicConfig(filename="".join(('log_',name,'.log')), encoding='utf-8', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    path_name = path.join("logs", "".join(('log_',name,'.log')))
+    logging.basicConfig(filename=path_name, encoding='utf-8', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
