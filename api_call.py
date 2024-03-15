@@ -55,7 +55,6 @@ def split_identifiers(identifiers):
     id_list = identifiers.split(",")
     bad_ids = []
     for id in id_list:
-        logger.warning(f"Id in for loop is: {id}")
         if not validate_mmsid(id):
             logger.error(f"Validation error for MMS id, id removed from API call: {id}")
             bad_ids += [id]
@@ -152,7 +151,7 @@ def output_bib_files(dir, part, input):
     try:
         file = open(filename, "w", encoding='utf-8', errors='backslashreplace')
         file.write(input)
-        logger.debug("output to file")
+        logger.debug(f"Output API response to file {filename}")
         file.close()
     except Exception as e:
         logger.debug(f"Error occured: {e}")
