@@ -1,7 +1,7 @@
 from os import path
 from logger_config import *
 from api_call import validate_mmsid
-from xml_load_and_process import get_marc_tag, load_pymarc_record
+from xml_load_and_process import *
 
 debug_log_config("get-parent")
 logger = logging.getLogger()
@@ -23,6 +23,7 @@ def get_parent_id(pymarc_record):
             logger.debug(f"Invalid MMS id: {id}")
             return "invalid mms id"
 
+
 """
 Input: Filepath list from get_callable_files.
 Processing: Loads records with Pymarc. 
@@ -38,10 +39,12 @@ def iterate_get_parents(filepath_list):
         try:
             record = load_pymarc_record(file)
             value = get_parent_id(record)
-            if value is not None and value not in parent_id_list:
-                parent_id_list.append(value)
+            if value is not None:
+                if value not in parent_id_list:
+                    parent_id_list.append(value)
         except Exception as e:
-            logger.error(f"Error iterating parent ids: {e} for file {file}")
+            logger.error(f"Error iterating parent ids: {e} for file {file}. " 
+                         +"950 $p may be invalid or not present.")
     return parent_id_list
 
 
@@ -54,11 +57,18 @@ Output: String
 
 def format_ids_for_api(id_list):
     string = ""
-    if type(id_list) == list:
-        for item in list:
-            string += item + ","
-    ids = string[0:-1]
-    return ids
+    try:
+        for item in id_list:
+            try:
+                string += item
+                string += ","
+            except Exception as e:
+                logging.error(f"String couldn't append item: {e}")
+        ids = string[0:-1]
+        return ids
+    except Exception as e:
+        logger.error(f"Error adding items to string: {e}")
+
 
 
 """
@@ -68,12 +78,11 @@ Output: File with mms ids separated by commas.
 """
 
 
-def write_ids_to_list(id_list, output_directory, filename):
+def write_ids_to_list(id_string, output_directory, filename):
     try:
-        ids = format_ids_for_api(id_list)
-        output_location = path.join(output_directory, f"{filename}.txt")
+        output_location = path.join(output_directory, filename)
         output_file = open(output_location, "w", encoding="utf-8")
-        output_file.write(ids)
+        output_file.write(id_string)
     except Exception as e:
         logger.error(f"Error generating mms id string from list: {e}")
 
@@ -87,9 +96,28 @@ Output: File that can be loaded to the API.
 """
 
 
-def parent_ids_to_file(source_directory, output_directory):
+def parent_ids_to_file(source_directory, output_directory, filename):
     try:
-        identifiers = iterate_get_parents(source_directory)
-        write_ids_to_list(identifiers, output_directory)
+        file_list = get_callable_files(source_directory)
+        identifiers = iterate_get_parents(file_list)
+        id_string = format_ids_for_api(identifiers)
+        write_ids_to_list(id_string, output_directory, filename)
+        logger.info(f"{len(identifiers)} parent MMS Ids written to file.")
     except Exception as e:
         logger.error(f"Error preparing writing ids to file: {e}")
+
+
+"""
+Input: Source directory containing XML records
+Processing: iterate_get_parents and format_ids_for_api
+Output: String containing mms ids separated by commas.
+"""
+
+
+def parent_ids_to_string(source_directory):
+    try:
+        file_list = get_callable_files(source_directory)
+        string_ids = iterate_get_parents(file_list)
+        return string_ids
+    except Exception as e:
+        logger.error(f"Error getting ids as string: {e}")
