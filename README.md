@@ -1,6 +1,6 @@
 # Metadata Clean-up Project
 
-A Code Club project to create some tools to help clean-up metadata in the Library's catalogue systems
+A Code Club project to create some tools to help clean-up metadata in the Library's catalogue systems.
 
 # Getting started
 
@@ -8,18 +8,28 @@ A Code Club project to create some tools to help clean-up metadata in the Librar
 
         Use this space to track additional libraries relied on in the code.
 
-
-### Api call  
-
-- [json](https://docs.python.org/3/library/json.html)
+### Whole project
 - [logging](https://docs.python.org/3/library/logging.html)
 - [os](https://docs.python.org/3/library/os.html)
 - [pipenv](https://pipenv.pypa.io/en/latest/)
 - [pytest](https://docs.pytest.org/en/8.0.x/)
+
+### Api call  
+
+- [json](https://docs.python.org/3/library/json.html)
 - [requests](https://requests.readthedocs.io/en/latest/)
 - [sys](https://docs.python.org/3/library/sys.html)
 
 Requires a `.env` file containing local variables. 
+
+### XML extraction
+
+- [json](https://docs.python.org/3/library/json.html)
+
+### Load XML to Pymarc
+
+- [pymarc](https://pymarc.readthedocs.io/en/latest/)
+
 
 ### Future scripts  
 
@@ -27,83 +37,36 @@ Requires a `.env` file containing local variables.
 
 ## Deliverables
 
-- Alma API call
-    - Confirm regarding API usage, investigate developing in Sandbox.
-    - Potential packages: Requests [Documentation](https://requests.readthedocs.io/en/latest/)
-        - Functions Kaggle notebook has a code snippit with Request library use.
-        - Normally return JSON data.
-        - Alma developer network
-    - Function for access token: Authentication (.env variables)
-        - Send a request with a key
-        - Returns access token
-    - Function to get record
-    - Test record set
-- Script that parses the child records and outputs a list of parent MMS IDs
-- Second API call set to retrieve parent records
-- Script that transforms the pulls the data together and performs transformations
-- Unit tests
+1. Alma API call: Takes a list of MMS Ids and returns JSON records containing up to 100 MARCXML records.
+2. XML extraction: Takes the JSON response and exports each XML record to its own file.
+3. Load XML: Loads MARCXML to Pymarc record objects.
+4. Transformations:
+    - Get parent MMS ID: Gets valid MMS Ids from the 950 $p field. Identifiers can be written to file or used as a lsit to call the API.
+    - Fix 655 gmgpc genre term headings - remove trailing period.
+    - Copy specified fields from parent record to child.
+5. Output files as .mrc files.
+- Unit tests (ongoing)
 
-## Deliverable 1 - API call  
-0. Organise access key
-1. Function for access token
-2. Functions for GET request
-3. Output
+## MarcEdit command line tool
+
+MarcEdit provides a [command-line tool](https://marcedit.reeset.net/cmarcedit-exe-using-the-command-line) as part of its functionality. This is proposed to be investigated as an option for simplifying MARC validation tasks, once a working proof of concept for replacing the parts of the workflow that currently require OpenRefine.
 
 # Early plan 
 
 ## Pseudocode  
-Pseudocode migrated from kaggle notebook. Created October 31.
+Updated pseudocode migrated from kaggle notebook
 
-        #Metadata cleanup project  
-        #Get child item  
-        #Find parten item of child  
-        #Get parent item of child  
-        #Compare field 264  
-        #If match do nothing  
-        #If blank in parent do nothing  
-        #Else change child to parent value  
-        #Alternative, to get suggestion of change, and deny/confirm, instead of going ahead with change  
+        # Metadata cleanup project  
+        # Get child item  
+        # Find parent item of child  
+            # Get parent item of child  
+        # Compare field 264  
+            # If match do nothing  
+            # If blank in parent do nothing  
+            # Else change child to parent value  
+                # Alternative: suggest update to human user and 
+                               user inputs confirmation
 
 ## Alma API
 
 Alma provides documentation of the REST APIs on their website: [link](https://developers.exlibrisgroup.com/alma/apis/). They also provide an [API Console](https://developers.exlibrisgroup.com/console/) for testing. Based on initial investigations in the *Bibliographic Records and Invventory* section it appears that responses can be returned in either XML or JSON. XML appears to contain complete bibliographic records, while JSON contains only some fields.
-
-## Requests - Python Library
-
-[Documentation](https://requests.readthedocs.io/en/latest/)
-
-Library for writing HTTP/1.1 requests. 
-
-## Alma API request  
-Draft code retrieved using Chat-GPT.
-
-
-        import requests  
-
-        # Replace these variables with your Alma API key and institution's Alma API endpoint URL
-        api_key = 'YOUR_ALMA_API_KEY'
-        base_url = 'https://api-eu.hosted.exlibrisgroup.com'  # Update with your institution's endpoint
-
-        # MMS ID of the record you want to retrieve
-        mms_id = 'REPLACE_WITH_YOUR_MMS_ID'
-
-        # Endpoint for retrieving a MARC record by MMS ID
-        endpoint = f'{base_url}/almaws/v1/bibs/{mms_id}'
-
-        # Prepare the headers with your API key
-        headers = {
-            'Authorization': f'apikey {api_key}',
-            'Accept': 'application/xml'  # You can specify 'application/json' if you prefer JSON response
-        }
-
-        # Make the GET request to retrieve the MARC record
-        response = requests.get(endpoint, headers=headers)
-
-        if response.status_code == 200:
-            marc_record = response.text
-            # Do something with the MARC record, for example, print it
-            print(marc_record)
-        else:
-            print(f"Failed to retrieve MARC record. Status code: {response.status_code}")
-            print(f"Response: {response.text}")
-
