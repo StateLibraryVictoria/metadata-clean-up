@@ -34,17 +34,13 @@ Output: List of IDs
 
 
 def iterate_get_parents(filepath_list):
-    parent_id_list = []
-    for file in filepath_list:
-        try:
-            record = load_pymarc_record(file)
-            value = get_parent_id(record)
-            if value is not None:
-                if value not in parent_id_list:
-                    parent_id_list.append(value)
-        except Exception as e:
-            logger.error(f"Error iterating parent ids: {e} for file {file}. " 
-                         +"950 $p may be invalid or not present.")
+    try:
+        parent_id_list = [get_parent_id(load_pymarc_record(file)) for file 
+                          in filepath_list 
+                          if get_parent_id(load_pymarc_record(file)) is not None]
+    except Exception as e:
+        logger.error(f"Error iterating parent ids: {e} for file {file}. " 
+                  +"950 $p may be invalid or not present.")
     return parent_id_list
 
 
@@ -56,18 +52,11 @@ Output: String
 
 
 def format_ids_for_api(id_list):
-    string = ""
     try:
-        for item in id_list:
-            try:
-                string += item
-                string += ","
-            except Exception as e:
-                logging.error(f"String couldn't append item: {e}")
-        ids = string[0:-1]
-        return ids
+        string = ",".join(id_list)
+        return string
     except Exception as e:
-        logger.error(f"Error adding items to string: {e}")
+       logger.error(f"Error adding items to string: {e}")
 
 
 
