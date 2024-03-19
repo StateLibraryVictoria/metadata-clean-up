@@ -10,14 +10,10 @@ def load_test_files(filename):
 
 ## Type should be input or expected
 def create_file_array(test_data, type):
-    input_files = []
     input_path = os.path.join(test_data, type)
     for root, dir, files in os.walk(input_path):
-        input_files = files
-    final_list = []
-    for file in input_files:
-        final_list += [os.path.join(input_path, file)]
-    return final_list
+        output_list = [path.join(input_path, file) for file in files]
+    return output_list
 
 data_path = path.join("tests","test_data","xml_load_and_process")
 
