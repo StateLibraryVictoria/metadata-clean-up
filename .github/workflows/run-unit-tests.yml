@@ -22,7 +22,6 @@ jobs:
           python -m pip install --upgrade pipenv wheel
       - name: Install dependencies
         run: |
-          cd metadata-clean-up
           pip install -r requirements.txt
       - name: Test with pytest
         run: |
