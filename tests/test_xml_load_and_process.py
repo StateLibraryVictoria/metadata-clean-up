@@ -12,6 +12,7 @@ def load_test_files(filename):
 def create_file_array(test_data, type):
     input_path = os.path.join(test_data, type)
     for root, dir, files in os.walk(input_path):
+        files.sort()
         output_list = [path.join(input_path, file) for file in files]
     return output_list
 
@@ -65,9 +66,10 @@ def test_load_pymarc_record(input_file, expected):
 
 # get_callable_files
 def test_get_callable_files():
-    files = get_callable_files(data_path)
-    expected = [path.join(data_path, "example_01_korean_rare.xml"), 
-                path.join(data_path, "example_02_chinese_rare.xml"), 
-                path.join(data_path, "example_03_photo_child.xml"), 
-                path.join(data_path, "example_04_photo_child.xml")]
+    input_files = path.join(data_path,"input")
+    files = get_callable_files(input_files)
+    expected = [path.join(input_files, "example_01_korean_rare.xml"), 
+                path.join(input_files, "example_02_chinese_rare.xml"), 
+                path.join(input_files, "example_03_photo_child.xml"), 
+                path.join(input_files, "example_04_photo_child.xml")]
     assert files == expected
