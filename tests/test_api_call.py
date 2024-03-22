@@ -28,8 +28,8 @@ def test_validate_mmsid(id, expected):
     assert validate_mmsid(id) == expected
 
 # Checks that the API key is configured correctly. This does call the API.
-#def test_check_api_key():
- #   assert check_api_key() == True
+def test_check_api_key():
+    assert check_api_key() == True
 
 # Checks that the json files are created as expected.
 def test_output_bib_files(tmp_path):
