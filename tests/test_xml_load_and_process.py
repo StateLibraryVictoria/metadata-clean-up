@@ -17,6 +17,7 @@ def create_file_array(test_data, type):
     return output_list
 
 data_path = path.join("tests","test_data","xml_load_and_process")
+input_path = os.path.join(data_path,'input')
 
 ## input files
 input_files = create_file_array(data_path, "input")
@@ -68,11 +69,11 @@ def test_load_pymarc_record(input_file, expected):
 
 # get_callable_files
 def test_get_callable_files():
-    files = get_callable_files(data_path)
-    expected = [path.join(data_path, "example_01_korean_rare.xml"), 
-                path.join(data_path, "example_02_chinese_rare.xml"), 
-                path.join(data_path, "example_03_photo_child.xml"), 
-                path.join(data_path, "example_04_photo_child.xml")]
+    files = get_callable_files(input_path)
+    expected = [path.join(input_path, "example_01_korean_rare.xml"), 
+                path.join(input_path, "example_02_chinese_rare.xml"), 
+                path.join(input_path, "example_03_photo_child.xml"), 
+                path.join(input_path, "example_04_photo_child.xml")]
     assert files == expected
 
 # get field count
