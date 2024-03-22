@@ -166,9 +166,11 @@ def fix_655_gmgpc(record):
     fields = record.get_fields('655')
 
     for field in fields:
+        field['2'] = 'gmgpc' if field['2'].startswith('gmgpc') \
+            else field['2'] # strips out trailing punctuation/whitespace in $2
         value = field['a'] if field['2'] == 'gmgpc' else ""
 
-        if value.endswith("."):
+        if value.endswith("."): # only updates gmgpc with final period
             field['a'] = value[0:-1]
     
     return record
