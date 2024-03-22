@@ -16,6 +16,8 @@ Output: Value or "Not present"
 
 def get_parent_id(pymarc_record):
     id = get_marc_tag(pymarc_record, "950", "p")
+    if id == 0:
+        return "Error"
     if id:
         if validate_mmsid(id):
             return id
@@ -39,8 +41,8 @@ def iterate_get_parents(filepath_list):
                           in filepath_list 
                           if get_parent_id(load_pymarc_record(file)) is not None]
     except Exception as e:
-        logger.error(f"Error iterating parent ids: {e} for file {file}. " 
-                  +"950 $p may be invalid or not present.")
+        logger.error(f"Error iterating parent ids: {e} " 
+                  +" 950 $p may be invalid or not present in some records.")
     return parent_id_list
 
 
