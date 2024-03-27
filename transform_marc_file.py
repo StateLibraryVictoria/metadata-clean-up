@@ -1,35 +1,44 @@
-from shared_functions import *
-from xml_load_and_process import *
-from get_parent_ids import *
-import pymarc
+from logger_config import *
 import os
+import subprocess
 
-debug_log_config("test")
+debug_log_config("marcedit-functions")
 logger = logging.getLogger()
 
-input_path = os.path.join("input","load", "mrc")
-output_path = os.path.join("output", "mrc", "records_fixed_gmgpc.mrc")
-
-# returns file extension for single file in input directory.
-for root, dir, files in os.walk(input_path):
-    output_list = [os.path.join(input_path, file) for file in files]
-    if len(output_list) == 0:
-        print("No files in input directory. Add files to /input/load/mrc.")
-    elif len(output_list) > 1:
-        print(f"Too many files in input directry. Only stage one file. Directory contains {len(output_list)} files.")
-    else:
-        filename, extension = os.path.splitext(output_list[0])
-        logger.info(f"Input directory contains {filename} with extension {extension}")
-        filepath = output_list[0]
-
-output_file = open(output_path, 'ab')
-
-with open(filepath, 'rb') as fh:
-    reader = pymarc.MARCReader(fh)
-    for record in reader:
-        fields = record.get_fields('655')
-        fix_655_gmgpc(record)
-        output_file.write(record.as_marc())
+try:
+    CMARCEDIT_PATH = os.getenv("CMARCEDIT_PATH")
+except KeyError:
+    print("Missing configuration. Location of cmarcedit.exe must be added to environment variables.")
+try:
+    RULES = os.getenv("MARCEDIT_RULES")
+except KeyError:
+    print("Missing configuration. Location of MarcEdit rules file must be added to environment variables.")
+#TASK = os.getenv("MARCEDIT_TASK") ## Not yet working.
 
 
+# The following works the same as MarcBreaker. Could be useful if a mrk file is preferred.
+def break_marc_record(record_path,output_name):
+    """Breaks Marc records into mrk for MarcEdit.
+
+    Args:
+        record_path (str) | path to mrc record including extension.
+        output_name (str) | filename for output including .mrk extension. Will automatically place in output directory.
+    """
+    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d output\\{output_name} -break", shell=True)
+
+
+# Won't run without the rules file, which needs to be properly escaped.
+# Output is the same as it prints to the user screen, so may require work to parse to something machine readable.
+def validate_mrc_record(record_path):
+    """Runs MarcEdit validation via command line over file.
+
+    Args:
+        record_path: str | Path to file requiring validation, can be .mrc or .mrk.
+        CMARCEDIT_PATH: str | Path to local cmarcedit.exe must be included in env file.
+        RULES: str | Path to local rules file for MarcEdit must be included in env file.
+    """
+    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d output\\report.txt -validate -rules {RULES}", shell=True)
+
+# Run tasks - NOT WORKING. writes an empty file. Terminal shows garbled text. It appears to have found the task
+#subprocess.run(CMARCEDIT_PATH + f" -s {final_path} -d output\\tast_2_applied.mrc -task {task} -experimental", shell=True)
 
