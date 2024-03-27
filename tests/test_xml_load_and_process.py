@@ -157,3 +157,15 @@ def test_fix_655_gmgpc():
     record = load_pymarc_record(photo_example_01)
     fixed_record = fix_655_gmgpc(record)
     assert fixed_record.get_fields('655')[0].value() == "Gelatin silver prints gmgpc"
+
+
+@pytest.mark.parametrize("input_file, expected", 
+                          [
+                             (source_path, True), 
+                             (input_files[1], False), 
+                             (input_files[2], False), 
+                             (input_files[3], False)
+                             ])
+def test_is_parent(input_file, expected):
+    record = load_pymarc_record(input_file)
+    assert is_parent(record) == expected
