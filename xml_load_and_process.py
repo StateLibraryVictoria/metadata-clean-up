@@ -52,6 +52,7 @@ def get_callable_files(dir_name):
     try:
         for root, dirs, files in os.walk(dir_name):
             files.sort()
+            print(files)
             output_list = [path.join(dir_name, file) for file in files]
         return output_list
     except Exception as e:

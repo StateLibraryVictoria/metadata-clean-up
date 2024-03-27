@@ -13,6 +13,7 @@ def load_test_files(filename):
 def create_file_array(test_data, type):
     input_path = os.path.join(test_data, type)
     for root, dir, files in os.walk(input_path):
+        files.sort()
         output_list = [path.join(input_path, file) for file in files]
     return output_list
 
