@@ -1,74 +1,96 @@
 import os
+import pymarc
+import subprocess
+from api_call import *
+from xml_load_and_process import *
 from logger_config import *
 
 debug_log_config("shared-functions")
 logger = logging.getLogger()
 
+input_path = os.path.join("input","load")
 processed_path = os.path.join("output", "record_processing","processed")
 exception_path = os.path.join("output", "record_processing","exceptions")
 
-def write_file_to_exceptions(file, error, open=True):
-    """Called to create a file in the exceptions area when a call fails.
+def split_marc_records(input_filename):
+    """Splits mrc records into Parent and Many records and returns a dictionary of identifiers.
 
     Args:
-        file (str | file object): If file is str it must be a directory and open must be set to False.
-        error (Exception): Pass exceptions from the previous step through to the exception handler.
-        open (bool): Status of the file True equals open, False equals string. Default is True.
+        input_filename: str - Location and filename of target Marc file.
 
     Processing:
-        Gets filename and writes to exceptions directory while also logging steps to logfile.
-
-    Returns:
-        None | Writes output to file and log.
+        Checks if records are Parent files, and writes those to parent_records.mrc in output/mrc/split/.
+        Other records get written into many_records.mrc file in same location.
+    
+    Return:
+        dictionary with keys: 
+            'parent_records': records identified as Parent records.
+            'many_records': records not identified as Parent records.
+            'parent_ids': Identifiers for parent records found in 950$p of many record.
     """
-    if open==False:
-        try:
-            file = open(file, "r", encoding="utf-8", errors="backslashreplace")
-            data = file.read()
-        except Exception as e:
-            logger.error(f"Exception identified with file {file}. Error: {e}")
-    else:
-        try:
-            if file.readable():
-                data = file.read()
+    identifiers = {"parent_records":[],"many_records":[], "parent_ids":[]}
+    with open(input_filename, 'rb') as fh:
+        reader = pymarc.MARCReader(fh) # creates
+        for record in reader:
+            id = record.get_fields('001')[0].value()
+            if is_parent(record):
+                identifiers['parent_records'].append(id)
+                output_file = os.path.join("output","mrc","split","parent",f"record_{id}.mrc")
             else:
-                data = file
-        except Exception as e:
-            logger.error(f"Exception identified with file. Error: {e}")
+                identifiers['many_records'].append(id)
+                field_950 = record.get_fields('950')
+                if len(field_950) > 0:
+                    try:
+                        if record['950']['p'] not in identifiers['parent_ids']:
+                            identifiers['parent_ids'].append(record['950']['p'])
+                    except KeyError:
+                        logger.info("950 p not present in record.")
+                output_file = os.path.join("output","mrc","split","many",f"record_{id}.mrc")
+            f = open(output_file, 'wb')
+            f.write(record.as_marc())
+    return identifiers
+
+def get_missing_records(parent_records, parent_ids, output_directory):
+    """Call API process to add missing parent records to existing file.
+
+    Args:
+        parent_records: list (str) - identifiers for parent records in current batch.
+        parent_ids: list (str) - identifiers located in many records required for processing.
+        output_file: str - MARC file with filepath to write retrieved records to.
+
+    Processing:
+        Checks parent_ids not in parent_records. Prepares and calls API to retrieve missing records.
+        Writes them to file.
+    """
+    # Check what identifiers need to be retrieved.
+    missing_list = []
+    for identifier in parent_ids:
+        if identifier not in parent_records:
+            missing_list.append(identifier)
+
+    # Retrieve records.
+    required = chunk_identifiers(missing_list)
+    xml = "<collection>" # Wraps xml in root element collection
+    if check_api_key():
+        for key in required:
+            response = get_bibs(key, required[key])
+            string = get_json_string(response)
+            bibs = json.loads(string)
+            for item in bibs["bib"]:
+                for key in item:
+                    if key == "anies":
+                        value = item["anies"][0].replace('<?xml version="1.0" encoding="UTF-16"?>', "")
+                        xml += value
+    xml += "</collection>" # Closes root element wrapping.
+    with open("output//xml//parents_retrieved.xml","w", encoding="utf-8",errors='backslashreplace') as out:
+        out.write(xml)
+
+    # Load xml to pymarc Record object array.
+    record_array = pymarc.parse_xml_to_array("output//xml//parents_retrieved.xml")
     
-    filename = os.path.basename(file.name)
-    logger.info(f"Exception identified with file {filename}.")
-
-    output_file = open(os.path.join(exception_path, filename), "a", encoding="utf-8", errors='backslashreplace')
-
-    if error:
-        output_file.write(repr(error)) # Write exception type and error to string.
-        logger.info(f"Error message written to file {filename}.")
-    output_file.write(data)
-    logger.info(f"File with exceptions {filename} written to to /output/record_processing/exceptions.")
-
-
-
-
-def write_file_to_processed(file, open=True):
-    if open==False:
-        try:
-            file = open(file, "r", encoding="utf-8", errors="backslashreplace")
-            data = file.read()
-        except Exception as e:
-            write_file_to_exceptions(file, e, open=False)
-            logger.error("Error encountered during write_file_to_processed with unopened file.")
-    else:
-        try:
-            if file.readable():
-                data = file.read()
-            else:
-                data = file
-        except Exception as e:
-            write_file_to_exceptions(file, e)
-            logger.error("Error encountered during write_file_to_processed with opened file.")
-    
-    filename = os.path.basename(file.name)
-    output_file = open(os.path.join(processed_path, filename), "a", encoding="utf-8", errors='backslashreplace')
-    output_file.write(data)
-    logger.debug(f"File written to /output/record_processing/processed with filename {filename}")
+    # Write to mrc.
+    for record in record_array:
+        id = record.get_fields('001')[0].value()
+        output_file = os.path.join(output_directory, f"record_{id}.mrc")
+        with open(output_file, 'wb') as mrc_out:
+            mrc_out.write(record.as_marc())
