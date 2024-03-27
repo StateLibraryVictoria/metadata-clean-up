@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} triggered this run
 on: [push]
 
 env:
-  KEY: ${{ secrets.KEY }}
+  KEY: ${{ secrets.SANDBOX_KEY }}
 
 jobs:
   build:
