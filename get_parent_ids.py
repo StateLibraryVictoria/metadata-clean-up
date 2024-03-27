@@ -41,13 +41,8 @@ def iterate_get_parents(filepath_list):
                           in filepath_list 
                           if get_parent_id(load_pymarc_record(file)) is not None]
     except Exception as e:
-<<<<<<< HEAD
         logger.error(f"Error iterating parent ids: {e} " 
                   +" 950 $p may be invalid or not present in some records.")
-=======
-        logger.error(f"Error iterating parent ids: {e}." 
-                  +" 950 $p may be invalid or not present.")
->>>>>>> main
     return parent_id_list
 
 
