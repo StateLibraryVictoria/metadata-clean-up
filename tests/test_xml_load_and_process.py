@@ -97,7 +97,7 @@ def test_get_field_count(input_file, expected):
                              (input_files[0], source_path, "655", "Replaced 655 field gmgpc"), 
                              (input_files[1], source_path, "037", ""), # case field not in record
                              (input_files[2], source_path, "950", "Replaced 950, only $a left."), 
-                             (input_files[3], source_path, "650", "Celebrities Australia Pictorial works.") # case too many fields
+                             (input_files[3], source_path, "650", "Architecture, Domestic Victoria Fitzroy.")
                              ])    
 def test_replace_field_whole_string(input_file, source_record, string_field, expected):
     record = load_pymarc_record(input_file)
@@ -143,7 +143,7 @@ field_650 = Field(
                              (input_files[0], source_path, field_655, "Replaced 655 field gmgpc"), 
                              (input_files[1], source_path, field_037, ""),
                              (input_files[2], source_path, field_950, "Replaced 950, only $a left."), 
-                             (input_files[3], source_path, field_650, "Celebrities Australia Pictorial works.")
+                             (input_files[3], source_path, field_650, "Architecture, Domestic Victoria Fitzroy.")
                              ])    
 def test_replace_field_field_object(input_file, source_record, field_object, expected):
     record = load_pymarc_record(input_file)
