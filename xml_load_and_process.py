@@ -20,9 +20,8 @@ def get_marc_tag(pymarc_record, field, subfield):
         value = pymarc_record[field][subfield]
         return value
     except:
-        logger.debug(f"Error getting field {field} ${subfield} from " 
-                     + pymarc_record.title() 
-                     + " Mms id: " + pymarc_record['001'].value())
+        logger.debug(f"Error getting field {field} ${subfield}")
+        return None
 
 
 
@@ -70,84 +69,107 @@ def get_field_count(record, field):
     return len(fields)
 
 
-def get_field_from_source(source_record, field):
-    """Checks for field in source record and returns value when only one example is present.
+def get_fields_from_source(source_record, field):
+    """Checks for field in source record and returns list of fields.
 
     Args:
         source_record (pymarc Record object): record containing data with target field.
         field (str | pymarc Field object): field desired to be copied.
 
     Returns:
-        pymarc Field object where only one is present within record.
+        List of pymarc Field objects
     """
     if type(field) == str:
         tag = field
     else:
         tag = field.tag
-        indicators = field.indicators
-        subfields = field.subfields
 
     # Check that field in source record.
-    if tag.startswith("6"):
-        return source_record.get_fields(tag)
-    elif get_field_count(source_record, tag) != 1:
+    match_fields = source_record.get_fields(tag)
+    if len(match_fields) == 0:
         amount = f"no {tag} fields" if get_field_count(source_record, tag) < 1 else f"too many {tag} fields"
         logger.warning(f"Source record contains {amount}. "
                         + "Cancelling operation.")
         return None
     else:
-        logger.info(f"Source record contains field {tag}. "
+        logger.info(f"Source record contains {len(match_fields)} copies of field {tag}. "
                         + "Continuing operation")
-        copy_field = source_record.get_fields(tag)
-    return copy_field[0] if len(copy_field) == 1 else None
+    return match_fields
 
-def add_field_to_target(target_record, field, replace=True):
+
+def remove_field_from_target(target_record, tag):
+    """Removes all copies of a field by tag. Removes all 1xx fields when a 100, 110, 111, 130 supplied."""
+    try: # try to remove the fields from the record to be updated
+        if tag.startswith("1"):
+            target_1xx = target_record.get_fields('100', '110', '111', '130')
+            logger.info(f"Removing {len(target_1xx)} subfields from record.")
+            print(f"Removing {len(target_1xx)} subfields from record.")
+            if len(target_1xx) > 1:
+                print("Multiple 1xx fields removed. See log for details.")
+                logger.warn("Multiple 1xx fields removed. All fields have been removed.")
+            for f in target_1xx:
+                logger.info(f"Record contains field: {f.tag}")
+                print(f"Record contains field: {f.tag}")
+                target_record.remove_field(f)
+                logger.info(f"Success: " + f.tag + " " + f.format_field() + " removed from record.")
+        else:
+            logger.info(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
+            print(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
+            for f in target_record.get_fields(tag):
+                target_record.remove_field(f)
+        logger.info(f"Success: {tag} removed from target.")
+        print(f"Success: {tag} removed from target.")
+        return target_record
+    except Exception as e:
+        logger.error(f"Error with replace field method. Could not get and remove field from target record. Error: {e}")
+
+
+def add_field_to_target(target_record, fields, replace=True):
     """ Returns the target record with the passed subfield. Default strips existing instances of field.
 
     Args:
-        target_record (pymarc Record object): record requiring updating.
-        field (pymarc Field object): field to be added to record.
-        replace (bool): whether to keep or delete existing fields. Defaults to delete (True).
+        target_record: pymarc Record object - record requiring updating.
+        field: list (pymarc Field object) - list of fields to be added to record.
+        replace: bool - whether to keep or delete existing fields. Defaults to delete existing copies of record (True).
 
     Returns:
         pymarc Record object: transformed record.
     """
-    tag = field.tag
-    indicators = field.indicators
-    subfields = field.subfields
-        
+    notRepeatable = ["010","018","036","038","040","042","044","045","066","100","110","111","130","240","243","245","254", "256", "263", "306","357","507","514"]
+
+
+    # Check that only one of non-repeatable fields are in supplied fields.
+    tag_list = []
+    for match_field in fields:
+        tag_list += match_field.tag
+        tag_list.sort()
+    for tag in tag_list:
+        if tag in notRepeatable:
+            if tag_list.count(tag) > 1:
+                print(f"Source record has multiple copies of unrepeatable field {tag}. Skipping record.")
+                logger.error(f"Source record has multiple copies of unrepeatable field {tag}. Skipping record.")
+                return target_record
+    
+    logger.info("Processing record: " + target_record.get_fields('001')[0].value())
+
+    # remove existing fields
     if replace:
-        logger.info("Processing record: " + target_record.get_fields('001')[0].value())
-        try: # try to remove the fields from the record to be updated
-            if tag.startswith("1"):
-                source_1xx = target_record.get_fields('100', '110', '111')
-                logger.info(f"Removing {len(source_1xx)} subfields from record.")
-                print(f"Removing {len(source_1xx)} subfields from record.")
-                if len(source_1xx) > 1:
-                    print("Multiple 1xx fields identified. See log for details.")
-                    logger.warn("Multiple 1xx fields identified. All fields have been removed.")
-                for f in source_1xx:
-                    logger.info(f"Record contains field: {f.tag}")
-                    print(f"Record contains field: {f.tag}")
-                    target_record.remove_field(f)
-                    logger.info(f"Success: " + f.tag + " " + f.format_field() + " removed from record.")
-            else:
-                logger.info(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
-                print(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
-                for f in target_record.get_fields(tag):
-                    target_record.remove_field(f)
-            logger.info(f"Success: {tag} removed from target.")
-            print(f"Success: {tag} removed from target.")
-        except Exception as e:
-            logger.error(f"Error with replace field method. Could not get and remove field from target record. Error: {e}")
+        for field in fields:
+            target_record = remove_field_from_target(target_record, field.tag)
+    else: # removes non repeatable fields from target record
+        for field in fields:
+            if field.tag in notRepeatable:
+                target_record = remove_field_from_target(target_record, field.tag)
+        
         
     # Add copy field to target record.
-    try:
-        target_record.add_ordered_field(field)
-        return target_record
-    except Exception as e:
-        logger.error(f"Error adding copy field to target record. Error: {e}")
-        return "Error"
+    for field in fields:
+        try:
+            target_record.add_ordered_field(field)
+        except Exception as e:
+            logger.error(f"Error adding copy fields to target record. Error: {e}")
+            return None
+    return target_record
 
 def replace_field(target_record, source_record, field):
     """Replaces a field in one record with the value from another.
@@ -162,11 +184,11 @@ def replace_field(target_record, source_record, field):
     Returns:
         pymarc record object: target record with or without updates.
     """
-    copy_field = get_field_from_source(source_record, field)
+    copy_fields = get_fields_from_source(source_record, field)
     
 
-    if copy_field is not None:
-        target_record = add_field_to_target(target_record, copy_field)
+    if copy_fields is not None:
+        target_record = add_field_to_target(target_record, copy_fields)
         
     updated_target_record = fix_655_gmgpc(target_record)
     return updated_target_record
