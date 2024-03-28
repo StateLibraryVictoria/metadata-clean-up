@@ -17,13 +17,13 @@ Output: Value or "Not present"
 def get_parent_id(pymarc_record):
     id = get_marc_tag(pymarc_record, "950", "p")
     if id == 0:
-        return "Error"
+        return None
     if id:
         if validate_mmsid(id):
             return id
         else:
             logger.debug(f"Invalid MMS id: {id}")
-            return "invalid mms id"
+            return None
 
 
 """
