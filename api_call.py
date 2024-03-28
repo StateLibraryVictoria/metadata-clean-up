@@ -31,12 +31,6 @@ def api_volume_check(api_return):
         return True
 
 
-"""
-Takes an MMS Id.
-Outputs a boolean where valid id is True.
-"""
-
-
 def validate_mmsid(mms_id):
     if mms_id.startswith("99") and mms_id.endswith("7636") and len(mms_id) > 6:
         return True
@@ -44,14 +38,9 @@ def validate_mmsid(mms_id):
         return False
 
 
-"""
-Takes a string of MMS Ids separated by commas. 
-    Checks each one is a valid MMS Id.
-Outputs a list of valid MMS ids (bad values added to log).
-"""
-
-
 def split_identifiers(identifiers):
+    """Taks a comma separated string of identifiers and checks all values are valid. Bad values are added to log.
+    """
     id_list = identifiers.split(",")
     bad_ids = []
     for id in id_list:
@@ -68,13 +57,14 @@ def split_identifiers(identifiers):
     return id_list
 
 
-"""
-Takes a list of mms ids.
-Outputs a dictionary with 100 records in each key.
-"""
-
-
 def chunk_identifiers(id_list):
+    """Convert list of identifiers into chunks of 100 identifiers
+
+    Returns:
+        Dictionary. 
+        Keys are numbers from 0 - number of keys.
+        Values (str) 100 identifiers separated by commas.
+    """
     counter = 0
     request_dict = {}
     while len(id_list) > 100:
@@ -93,13 +83,11 @@ def chunk_identifiers(id_list):
     return request_dict
 
 
-"""
-Input is query to Alma API.
-Output is boolean except if api_volume_check() fails.
-"""
 
 
 def check_api_key():
+    """Makes a test call to the API and returns a boolean.
+    """
     headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
     response = requests.get(BASEURL + "test", headers=headers)
     logger.debug(response)
@@ -112,13 +100,16 @@ def check_api_key():
         return False
 
 
-"""
-Input will be a batch of MMS ids.
-Output will be an API response.
-"""
-
-
 def get_bibs(part, mms_ids):
+    """Query API for bibliographic records. Assumes mutliple calls will be passed.
+
+    Args:
+        part (str) | Number as string representing the chunk of identifiers being sent to API.
+        mms_ids (str) | Up to 100 MMS Ids separated by commas.
+
+    Returns:
+        Api response (JSON)
+    """
     headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
     query = {"mms_id": mms_ids}
     api_call = requests.get(BASEURL, params=query, headers=headers)
