@@ -4,6 +4,19 @@ A Code Club project to create some tools to help clean-up metadata in the Librar
 
 # Getting started
 
+## Installation and setup
+
+Note that for the instructions below, the command `python -m` may be required at the start of each command to add modules to path.
+
+- [Install Pipenv](https://pipenv.pypa.io/en/latest/installation.html#installing-pipenv) using the command `$ pip install pipenv --user`.
+- Install dependencies using `pipenv install` to install requirements in `Pipfile`. Requirements are also stored in `requirements.txt`.
+- Create a local `.env` file based of the file `env.example` to add required API key and other secret variables.
+- When writing scripts use `setup_directories()` function in `shared_functions.py` to make required directories before running.
+- Run `pipenv shell` to start the environment.
+- Run scripts in shell. Check the log file in `logs/` for any output errors.
+- Optional: Install [MarcEdit](https://marcedit.reeset.net/) (See Non-python dependencies below)
+
+
 ## Dependencies
 
         Use this space to track additional libraries relied on in the code.
