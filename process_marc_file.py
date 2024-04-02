@@ -1,4 +1,5 @@
 import os
+from sys import exit
 from copy import deepcopy
 from shared_functions import *
 from xml_load_and_process import *
@@ -9,26 +10,30 @@ from logger_config import *
 debug_log_config("test")
 logger = logging.getLogger()
 
+# Setup workspace
+setup_directories()
+
 output_path = os.path.join("output", "mrc","split")
 input_path = os.path.join("input","load", "mrc")
 parent_records_path = os.path.join(output_path,"parent")
 many_records_path = os.path.join(output_path,"many")
+
 
 # Check only one file in input directory and process.
 for root, dir, files in os.walk(input_path):
     output_list = [os.path.join(input_path, file) for file in files]
     if len(output_list) == 0:
         print("No files in input directory. Add files to /input/load/mrc. Ending program.")
-        os.exit()
+        exit() 
     elif len(output_list) > 1:
         print(f"Too many files in input directry. Only stage one file. Directory contains {len(output_list)} files. Ending program.")
-        os.exit()
+        exit()
     else:
         filename, extension = os.path.splitext(output_list[0])
         if extension != ".mrc":
             print("File in load directory does not have expected .mrc extension. Ending program.")
             logger.warn(f"Input directory contains {filename} with extension {extension}: restage a file with extension .mrc.")
-            os.exit()
+            exit()
         logger.info(f"Input directory contains {filename} with extension {extension}.")
         filepath = output_list[0]
 
@@ -59,7 +64,7 @@ def get_files_list(directory):
     output_array = []
     for root, dirs, files in os.walk(directory):
         for file in files:
-            filename = path.join(directory, file)
+            filename = os.path.join(directory, file)
             output_array += [filename]
     return output_array
 
