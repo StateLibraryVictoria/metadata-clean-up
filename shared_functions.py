@@ -1,6 +1,5 @@
 import os
 import pymarc
-import subprocess
 from api_call import *
 from xml_load_and_process import *
 from logger_config import *
@@ -8,9 +7,25 @@ from logger_config import *
 debug_log_config("shared-functions")
 logger = logging.getLogger()
 
-input_path = os.path.join("input","load")
-processed_path = os.path.join("output", "record_processing","processed")
-exception_path = os.path.join("output", "record_processing","exceptions")
+
+
+def setup_directories():
+    log_path = os.path.join("logs")
+    input_path = os.path.join("input","load")
+    processed_path = os.path.join("output", "record_processing","processed")
+    exception_path = os.path.join("output", "record_processing","exceptions")
+    output_path_mrc = os.path.join("output", "mrc","split")
+    input_path_mrc = os.path.join(input_path, "mrc")
+    output_path_xml = os.path.join("output","xml")
+    parent_records_path = os.path.join(output_path_mrc,"parent")
+    many_records_path = os.path.join(output_path_mrc,"many")
+    paths = [log_path, input_path, processed_path, exception_path, output_path_mrc, 
+             input_path_mrc, output_path_xml, parent_records_path, many_records_path]
+
+    for path in paths:
+        if not os.path.exists(path):
+            # create missing directories
+            os.makedirs(path)
 
 def split_marc_records(input_filename):
     """Splits mrc records into Parent and Many records and returns a dictionary of identifiers.
