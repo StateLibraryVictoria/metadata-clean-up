@@ -7,8 +7,11 @@ from get_parent_ids import *
 from logger_config import *
 
 
-debug_log_config("test")
-logger = logging.getLogger()
+
+logger = logging.getLogger(__name__)
+debug_log_config("log_file")
+logger.info("==Process marc file log==")
+
 
 # Setup workspace
 setup_directories()
