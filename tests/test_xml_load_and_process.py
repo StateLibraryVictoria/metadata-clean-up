@@ -9,6 +9,8 @@ def load_test_files(filename):
     data = open(os.path.join(filename), 'r', encoding="utf-8", errors='backslashreplace')
     return data.read()
 
+ROOT_DIR = os.path.abspath(os.curdir)
+
 ## Type should be input or expected
 def create_file_array(test_data, type):
     input_path = os.path.join(test_data, type)
@@ -17,7 +19,7 @@ def create_file_array(test_data, type):
         output_list = [path.join(input_path, file) for file in files]
     return output_list
 
-data_path = path.join("tests","test_data","xml_load_and_process")
+data_path = path.join(ROOT_DIR,"tests","test_data","xml_load_and_process")
 input_path = os.path.join(data_path,'input')
 
 ## input files
