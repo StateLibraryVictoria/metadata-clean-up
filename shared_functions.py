@@ -4,10 +4,10 @@ from api_call import *
 from xml_load_and_process import *
 from logger_config import *
 
-debug_log_config("shared-functions")
-logger = logging.getLogger()
 
-
+logger = logging.getLogger(__name__)
+debug_log_config("log_file")
+logger.info("==Shared function script logging==")
 
 def setup_directories():
     log_path = os.path.join("logs")

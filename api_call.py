@@ -157,8 +157,10 @@ Every time the script is run it will append log to the same file.
 
 Logger calls are used throughout the program and will record hidden info including the http request.
 """
-debug_log_config("api_call")
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+debug_log_config("log_file")
+logger.info("==API Script Logging==")
+
 
 ## Loads environment variables
 # One MMS id as a string

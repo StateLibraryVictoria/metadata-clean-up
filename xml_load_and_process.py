@@ -4,9 +4,9 @@ import logging
 import re
 from logger_config import *
 
-debug_log_config("load-xml")
-logger = logging.getLogger()
-
+logger = logging.getLogger(__name__)
+debug_log_config("log_file")
+logger.info("==XML load and process log==")
 
 def get_marc_tag(pymarc_record, field, subfield):
     """Retrieve value in specified field.
