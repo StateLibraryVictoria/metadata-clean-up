@@ -27,6 +27,9 @@ def setup_directories():
             # create missing directories
             os.makedirs(path)
 
+    # create logfile location
+    open(os.path.join(log_path, "log_log_file.log"),'a')
+
 def split_marc_records(input_filename):
     """Splits mrc records into Parent and Many records and returns a dictionary of identifiers.
 
