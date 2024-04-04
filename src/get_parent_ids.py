@@ -1,7 +1,7 @@
 from os import path
-from logger_config import *
-from api_call import validate_mmsid
-from xml_load_and_process import *
+from src.logger_config import *
+from src.api_call import validate_mmsid
+from src.xml_load_and_process import *
 
 debug_log_config("get-parent")
 logger = logging.getLogger()
