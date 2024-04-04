@@ -15,6 +15,10 @@ missing_records = ["9938846603607636"]
 # Create MARC file
 @pytest.fixture(scope="session")
 def temp_marc_file(tmp_path_factory):
+    """Returns the filename and path of a MARC file
+    copied from test_data to the temporary directory
+    for use across tests.
+    """
     mrcfn = tmp_path_factory.getbasetemp() / filename
     shutil.copyfile(test_marc_file, mrcfn)
     yield mrcfn
@@ -22,6 +26,11 @@ def temp_marc_file(tmp_path_factory):
 # Create required directory structure in temp directory
 @pytest.fixture(scope="session")
 def setup_working_directory(tmp_path_factory):
+    """Returns a path to the temporary directory where 
+    folder structure has been generated.
+
+    Used for other tests.
+    """
     location = tmp_path_factory.getbasetemp()
     os.chdir(location)
     setup_directories()
@@ -30,6 +39,9 @@ def setup_working_directory(tmp_path_factory):
 # Create copy of required match records in output directory.
 @pytest.fixture(scope="session")
 def missing_parents(tmp_path_factory):
+    """Returns output directory containing expected MARC files
+    copied from test_data to temporary directory for testing.
+    """
     location = tmp_path_factory.getbasetemp()
     output_dir = os.path.join("output", "mrc", "split", "parent")
     output = os.path.join(location, output_dir)
