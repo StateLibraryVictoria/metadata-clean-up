@@ -1,8 +1,8 @@
 import os
 import pymarc
-from api_call import *
-from xml_load_and_process import *
-from logger_config import *
+from src.api_call import *
+from src.xml_load_and_process import *
+from src.logger_config import *
 
 
 logger = logging.getLogger(__name__)
