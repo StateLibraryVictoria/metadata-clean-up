@@ -2,7 +2,7 @@ import pymarc
 import os
 import logging
 import re
-from logger_config import *
+from src.logger_config import *
 
 logger = logging.getLogger(__name__)
 debug_log_config("log_file")
