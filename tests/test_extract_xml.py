@@ -1,7 +1,7 @@
 from os import path
 import pytest
 
-from extract_xml import *
+from src.extract_xml import *
 
 ## Define paths
 extract_xml_test_path = path.join("tests","test_data","extract_xml")

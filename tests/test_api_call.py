@@ -2,7 +2,7 @@
 from datetime import datetime
 import pytest
 
-from api_call import *
+from src.api_call import *
 
 # Read the file into the program.
 # Write second version of test_split.

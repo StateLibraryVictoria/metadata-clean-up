@@ -2,7 +2,7 @@ from os import path
 import pytest
 from pymarc import Field, Subfield
 
-from xml_load_and_process import *
+from src.xml_load_and_process import *
 
 # Setup test data
 def load_test_files(filename):

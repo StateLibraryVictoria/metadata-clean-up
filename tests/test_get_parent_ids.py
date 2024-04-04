@@ -1,6 +1,6 @@
 import pytest
-from get_parent_ids import *
-from xml_load_and_process import get_callable_files, load_pymarc_record
+from src.get_parent_ids import *
+from src.xml_load_and_process import get_callable_files, load_pymarc_record
 
 id_list = "9938036653607636,9938036613607636,9938164143607636".split(",")
 
