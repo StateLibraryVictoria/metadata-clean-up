@@ -1,7 +1,6 @@
 import pytest
 import shutil
 import os
-from src.shared_functions import *
 
 # Set the project root to resolve source file.
 ROOT_DIR = os.path.abspath(os.curdir)
@@ -33,8 +32,22 @@ def setup_working_directory(tmp_path_factory):
     """
     location = tmp_path_factory.getbasetemp()
     os.chdir(location)
-    setup_directories()
-    os.chdir(ROOT_DIR)
+    log_path = os.path.join("logs")
+    input_path = os.path.join("input","load")
+    processed_path = os.path.join("output", "record_processing","processed")
+    exception_path = os.path.join("output", "record_processing","exceptions")
+    output_path_mrc = os.path.join("output", "mrc","split")
+    input_path_mrc = os.path.join(input_path, "mrc")
+    output_path_xml = os.path.join("output","xml")
+    parent_records_path = os.path.join(output_path_mrc,"parent")
+    many_records_path = os.path.join(output_path_mrc,"many")
+    paths = [log_path, input_path, processed_path, exception_path, output_path_mrc, 
+             input_path_mrc, output_path_xml, parent_records_path, many_records_path]
+    
+    for path in paths:
+        if not os.path.exists(path):
+            # create missing directories
+            os.makedirs(path)
     yield location
 
 # Create copy of required match records in output directory.
