@@ -1,8 +1,8 @@
-from api_call import *
-from extract_xml import *
-from xml_load_and_process import *
-from get_parent_ids import *
-from logger_config import *
+from src.api_call import *
+from src.extract_xml import *
+from src.xml_load_and_process import *
+from src.get_parent_ids import *
+from src.logger_config import *
 
 logger = logging.getLogger()
 
