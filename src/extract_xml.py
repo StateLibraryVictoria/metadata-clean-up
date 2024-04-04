@@ -1,7 +1,7 @@
 import json
 import logging
 from os import getenv, path, walk
-from logger_config import *
+from src.logger_config import *
 
 debug_log_config("extract-xml")
 logger = logging.getLogger()
