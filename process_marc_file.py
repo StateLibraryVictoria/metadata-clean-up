@@ -1,10 +1,10 @@
 import os
 from sys import exit
 from copy import deepcopy
-from shared_functions import *
-from xml_load_and_process import *
-from get_parent_ids import *
-from logger_config import *
+from src.shared_functions import *
+from src.xml_load_and_process import *
+from src.get_parent_ids import *
+from src.logger_config import *
 
 
 
