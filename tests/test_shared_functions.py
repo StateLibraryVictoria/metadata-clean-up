@@ -1,6 +1,4 @@
-import pytest
 import os
-import time
 from src.shared_functions import *
 
 """Tests for shared functions.
@@ -22,7 +20,6 @@ def test_split_marc_records_dictionary_keys_generated(temp_marc_file):
     os.chdir(location)
     setup_directories()
     dictionary = split_marc_records(temp_marc_file)
-    time.sleep(1)
     assert "many_records" in dictionary
     assert "parent_records" in dictionary
     assert "parent_ids" in dictionary
@@ -52,7 +49,6 @@ def test_split_marc_records_equals_expected(missing_parents, temp_marc_file):
     # modify the expected ids to match filenames
     expected_ids[:] = ["".join(("record_",id,".mrc")) for id in expected_ids]
     expected_ids.sort()
-    print(location)
     for root, dir, files in os.walk(location):
         files.sort()
         assert files == expected_ids

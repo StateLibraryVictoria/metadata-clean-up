@@ -47,7 +47,6 @@ def test_get_records_first_matches_expected(input, expected, id):
     expected_data = expected
     records = get_record(test_data)
     target = records[id][0]
-    print(target)
     assert target == expected_data
 
 @pytest.mark.parametrize("input, expected, id", [(single_file_read, "<record>", single_file_id), (spec_char_input_read, "<record>", spec_char_id)])
