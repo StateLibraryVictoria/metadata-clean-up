@@ -1,4 +1,5 @@
 from os import path
+import pymarc
 from src.logger_config import *
 from src.api_call import validate_mmsid
 from src.xml_load_and_process import *
@@ -6,15 +7,16 @@ from src.xml_load_and_process import *
 debug_log_config("get-parent")
 logger = logging.getLogger()
 
-"""
-Input: record
-Processing: Passes 950 and p to get_marc_tag.
-            Checks that value is a valid id.
-Output: Value or "Not present"
-"""
+
 
 
 def get_parent_id(pymarc_record):
+    """Get parent mms id from 950 $p
+        Input: record
+        Processing: Passes 950 and p to get_marc_tag.
+            Checks that value is a valid id.
+        Output: Value or "Not present"
+    """
     id = get_marc_tag(pymarc_record, "950", "p")
     if id == 0:
         return None
@@ -26,24 +28,51 @@ def get_parent_id(pymarc_record):
             return None
 
 
-"""
-Input: Filepath list from get_callable_files.
-Processing: Loads records with Pymarc. 
+
+
+
+def iterate_get_parents(filepath_list): #also get child MMS Id and append as a tuple.
+    """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
+        Input: .mrc or .xml filepath list from get_callable_files.
+
+        Processing: Loads records with Pymarc. 
+            Gets 001
             Gets the parent MMS ID if present.
-            Adds unique values to list.
-Output: List of IDs
-"""
-
-
-def iterate_get_parents(filepath_list):
-    try:
-        parent_id_list = [get_parent_id(load_pymarc_record(file)) for file 
-                          in filepath_list 
-                          if get_parent_id(load_pymarc_record(file)) is not None]
-    except Exception as e:
-        logger.error(f"Error iterating parent ids: {e} " 
-                  +" 950 $p may be invalid or not present in some records.")
-    return parent_id_list
+            Adds values to a dictionary with MMS Id of record as key.
+        Output: Dictionary with a index: [id, parent_id]
+    """
+    index = 0
+    if filepath_list[0].endswith(".mrc"):
+        try:
+            parent_id_dict = {}
+            for file in filepath_list:
+                with open(file, 'rb') as fh:
+                    reader = pymarc.MARCReader(fh)
+                    for record in reader:
+                        id = record['001'].value()
+                        parent_id = get_parent_id(record)
+                        if parent_id is not None:
+                            parent_id_dict.update({index:[id, parent_id]})
+                            index += 1
+        except Exception as e:
+            logger.error(f"Error reading marc from iterating parent ids: {e}")
+    elif filepath_list[0].endswith(".xml"):
+        try:
+            parent_id_dict = {}
+            for file in filepath_list:
+                record = load_pymarc_record(file)
+                id = record['001'].value()
+                parent_id = get_parent_id(record)
+                if parent_id is not None:
+                    parent_id_dict.update({index : [id, parent_id]})
+                    index == 1
+        except Exception as e:
+            logger.error(f"Error iterating parent ids: {e} " 
+                    +" 950 $p may be invalid or not present in some records.")
+    else:
+        print("No valid files supplied. Files must be .mrc or .xml.")
+        logger.error("No valid files supplied. Files must be .mrc or .xml.")
+    return parent_id_dict
 
 
 """
