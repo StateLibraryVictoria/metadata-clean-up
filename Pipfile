@@ -9,5 +9,7 @@ requests = "*"
 lxml = "*"
 pytest = "*"
 black = "*"
+pandas = "*"
+openpyxl = "*"
 
 [dev-packages]
