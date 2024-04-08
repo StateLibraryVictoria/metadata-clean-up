@@ -1,5 +1,7 @@
 import os
+import re
 import pymarc
+import pandas as pd
 from src.api_call import *
 from src.xml_load_and_process import *
 from src.logger_config import *
@@ -29,6 +31,7 @@ def setup_directories():
 
     # create logfile location
     open(os.path.join(log_path, "log_log_file.log"),'a')
+
 
 def split_marc_records(input_filename):
     """Splits mrc records into Parent and Many records and returns a dictionary of identifiers.
@@ -68,25 +71,30 @@ def split_marc_records(input_filename):
             f.write(record.as_marc())
     return identifiers
 
-def get_missing_records(parent_records, parent_ids, output_directory):
+def get_missing_records(existing_records, request_ids, output_directory):
     """Call API process to add missing parent records to existing file.
 
     Args:
-        parent_records: list (str) - identifiers for parent records in current batch.
-        parent_ids: list (str) - identifiers located in many records required for processing.
+        existing_records: list (str) - identifiers for already downloaded records.
+        request_ids: list (str) - identifiers required for download (may overlap with existing)
         output_file: str - MARC file with filepath to write retrieved records to.
 
     Processing:
-        Checks parent_ids not in parent_records. Prepares and calls API to retrieve missing records.
+        Checks request_ids not in existing_records. Prepares and calls API to retrieve missing records.
         Writes them to file.
     """
+    logger.debug(f"Number of existing records: {len(existing_records)}")
+    logger.debug(f"Number of request ids: {len(request_ids)}")
     # Check what identifiers need to be retrieved.
     missing_list = []
-    for identifier in parent_ids:
-        if identifier not in parent_records:
+    for identifier in request_ids:
+        if identifier not in existing_records:
             missing_list.append(identifier)
 
     # Retrieve records.
+    logger.info("Missing list:")
+    logger.info(missing_list)
+
     required = chunk_identifiers(missing_list)
     xml = "<collection>" # Wraps xml in root element collection
     if check_api_key():
@@ -100,11 +108,11 @@ def get_missing_records(parent_records, parent_ids, output_directory):
                         value = item["anies"][0].replace('<?xml version="1.0" encoding="UTF-16"?>', "")
                         xml += value
     xml += "</collection>" # Closes root element wrapping.
-    with open("output//xml//parents_retrieved.xml","w", encoding="utf-8",errors='backslashreplace') as out:
+    with open("output//xml//records_retrieved.xml","w", encoding="utf-8",errors='backslashreplace') as out:
         out.write(xml)
 
     # Load xml to pymarc Record object array.
-    record_array = pymarc.parse_xml_to_array("output//xml//parents_retrieved.xml")
+    record_array = pymarc.parse_xml_to_array("output//xml//records_retrieved.xml")
     
     # Write to mrc.
     for record in record_array:
@@ -112,3 +120,73 @@ def get_missing_records(parent_records, parent_ids, output_directory):
         output_file = os.path.join(output_directory, f"record_{id}.mrc")
         with open(output_file, 'wb') as mrc_out:
             mrc_out.write(record.as_marc())
+
+# Load records as datafrmae
+def get_identifiers_from_spreadsheet(filename):
+    """Loads a spreadsheet to dataframe from filename and sets mms id columns to 
+    have prefix mms_id.
+
+    Returns the dataframe with columns containing MMS ids prefixed with "mms_id_".
+    Columns with mms_id prefix that do not contain MMS Ids will have the prefix 
+    'ex_' added.
+    If there are no mms id columns identified, will exit program.
+    """
+    try:
+        data = pd.read_excel(filename)
+    except Exception as e:
+        print(f"Error opening file: {e}")
+        logger.error(f"Error loading spreadsheet: {e}")
+    column_titles = list(data)
+    # convert all values to string
+    data[column_titles] = data[column_titles].astype(str)
+    # get mms_id columns
+    current_column = []
+    for title in column_titles:
+        if any(data[title].str.startswith("99")) and any(data[title].str.endswith("7636")):
+            current_column.append(title)
+            column_titles.remove(title)
+    if len(current_column) == 0:
+        print("No mms ids identified. Quitting.")
+        logger.info("No MMS Ids identified in supplied spreadsheet.")
+        sys.exit()
+    column_dict = {}
+    for title in column_titles:
+        if title.startswith("mms_id"):
+            new_title = f"ex_{title}"
+            column_dict.update({title: new_title})
+    for column in current_column:
+        if not column.startswith("mms_id"):
+            column_dict.update({column : f"mms_id_{column}"})
+    data = data.rename(columns=column_dict)
+    return data
+
+def merge_marc_records(directory, output_filename):
+    try:
+        for root, dir, files in os.walk(directory):
+            dir_list = [path.join(directory, file) for file in files]
+            dir_list.sort()
+    except Exception as e:
+        logger.error(f"Error getting directory list for marc record merge: {e}")
+    logger.debug(f"Directory list: {dir_list}")
+    try:
+        with open(output_filename, 'ab') as output:
+            for file in dir_list:
+                with open(file, 'rb') as mrc:
+                    reader = pymarc.MARCReader(mrc)
+                    for record in reader:
+                        output.write(record.as_marc())
+    except Exception as e:
+        logger.error(f"Error merging MARC records: {e}")
+
+    # walk directory and open mrc files.
+    # Write each one into compiled file.
+    return None
+
+def get_list_error_ids(validator_report):
+    identifiers = []
+    mms_id = r"99\d+7636"
+    with open(validator_report, "r") as report:
+        data = report.read()
+        identifiers=re.findall(mms_id, data)
+    logger.info(f"Number of records with errors identified: {len(identifiers)}")
+    return identifiers
