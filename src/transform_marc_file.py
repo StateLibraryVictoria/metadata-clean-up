@@ -1,4 +1,4 @@
-from logger_config import *
+from src.logger_config import *
 import os
 import subprocess
 
@@ -24,12 +24,12 @@ def break_marc_record(record_path,output_name):
         record_path (str) | path to mrc record including extension.
         output_name (str) | filename for output including .mrk extension. Will automatically place in output directory.
     """
-    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d output\\{output_name} -break", shell=True)
+    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d {output_name} -break", shell=True)
 
 
 # Won't run without the rules file, which needs to be properly escaped.
 # Output is the same as it prints to the user screen, so may require work to parse to something machine readable.
-def validate_mrc_record(record_path):
+def validate_mrc_record(record_path, report_name):
     """Runs MarcEdit validation via command line over file.
 
     Args:
@@ -37,7 +37,7 @@ def validate_mrc_record(record_path):
         CMARCEDIT_PATH: str | Path to local cmarcedit.exe must be included in env file.
         RULES: str | Path to local rules file for MarcEdit must be included in env file.
     """
-    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d output\\report.txt -validate -rules {RULES}", shell=True)
+    subprocess.run(CMARCEDIT_PATH + f" -s {record_path} -d {report_name} -validate -rules {RULES}", shell=True)
 
 # Run tasks - NOT WORKING. writes an empty file. Terminal shows garbled text. It appears to have found the task
 #subprocess.run(CMARCEDIT_PATH + f" -s {final_path} -d output\\tast_2_applied.mrc -task {task} -experimental", shell=True)
