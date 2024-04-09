@@ -171,3 +171,36 @@ def test_fix_655_gmgpc():
 def test_is_parent(input_file, expected):
     record = load_pymarc_record(input_file)
     assert is_parent(record) == expected
+
+def test_subfield_is_in_record_type_handling():
+    with pytest.raises(Exception) as e_info:
+        subfield_is_in_record("not-a-reord","query","100",'a')
+
+def test_subfield_is_in_record_single_record(missing_parents):
+    for root, dirs, files in os.walk(missing_parents):
+        files.sort()
+        file = os.path.join(missing_parents, files[0])
+    with open(file, 'rb') as fh:
+        reader = pymarc.MARCReader(fh)
+        for record in reader:
+            returned = subfield_is_in_record(record, 'CUASM213/7', '037', 'a')
+    assert returned == "CUASM213/7"
+
+def test_subfield_is_in_record_whitespace(missing_parents):
+    for root, dirs, files in os.walk(missing_parents):
+        files.sort()
+        file = os.path.join(missing_parents, files[0])
+    with open(file, 'rb') as fh:
+        reader = pymarc.MARCReader(fh)
+        for record in reader:
+            returned = subfield_is_in_record(record, 'CUASM213 / 7', '037', 'a')
+    assert returned == "CUASM213/7"
+
+def test_fix_245_indicators(temp_marc_file):
+    with open(temp_marc_file, 'rb') as mf:
+        reader = pymarc.MARCReader(mf)
+        for record in reader:
+            if record['001'].value()=='9939651473607636':
+                new_record = fix_245_indicators(record)
+                break
+    assert new_record['245'].indicator2 == '0'
