@@ -1,4 +1,5 @@
 from os import path
+from copy import deepcopy
 import pymarc
 from src.logger_config import *
 from src.api_call import validate_mmsid
@@ -8,7 +9,60 @@ debug_log_config("get-parent")
 logger = logging.getLogger()
 
 
-
+def big_bang_replace(many_record, parent_record):
+    fix_record = deepcopy(many_record)
+    onexx = ['100', '110', '111', '130']
+    pub_year = ['260', '264']
+    subjects = ["600", "610", "611", "630", "648", "650", "651", "653", "654", "655",
+            "656", "657", "658", "662", "690", "691", "696", "697", "698", "699",]
+    added_entries = ["700", "710", "711", "720", "730", "740", "752", "753", "754", "790",
+            "791", "792", "793", "796", "797", "798", "799",]
+    series = ["800", "810", "811", "830"]
+    notRepeatable = ["010","018","036","038","040","042","044","045","066","100","110","111","130","240","243","245","254", "256", "263", "306","357","507","514"]
+    replace_list = [onexx, pub_year, subjects, added_entries, series]
+    in_parent = []
+    try:
+        for list in replace_list:
+            for item in list:
+                count = len(parent_record.get_fields(item))
+                if count == 0:
+                    continue
+                elif count == 1:
+                    in_parent.append(item)
+                elif count > 1 and item not in notRepeatable:
+                    in_parent.append(item)
+    except Exception as e:
+        print(f"Error setting up list of present fields in parent for big bang replace: {e}")
+    try:
+        for item in in_parent:
+            if item.startswith('1'):
+                for tag in onexx:
+                    fix_record.remove_fields(tag)
+                for field in parent_record.get_fields(item):
+                    fix_record.add_ordered_field(field)
+            if item.startswith('2'):
+                for tag in pub_year:
+                    fix_record.remove_fields(tag)
+                for field in parent_record.get_fields(item):
+                    fix_record.add_ordered_field(field)
+            elif item.startswith('6'):
+                for tag in subjects:
+                    fix_record.remove_fields(tag)
+                for field in parent_record.get_fields(item):
+                    fix_record.add_ordered_field(field)
+            elif item.startswith('7'):
+                for tag in added_entries:
+                    fix_record.remove_fields(tag)
+                for field in parent_record.get_fields(item):
+                    fix_record.add_ordered_field(field)
+            elif item.startswith('8'):
+                for tag in series:
+                    fix_record.remove_fields(tag)
+                for field in parent_record.get_fields(item):
+                    fix_record.add_ordered_field(field)
+    except Exception as e:
+        print(f"Error replacing fields in many record: {e}")
+    return fix_record
 
 def get_parent_id(pymarc_record):
     """Get parent mms id from 950 $p
@@ -27,10 +81,6 @@ def get_parent_id(pymarc_record):
             logger.debug(f"Invalid MMS id: {id}")
             return None
 
-
-
-
-
 def iterate_get_parents(filepath_list): #also get child MMS Id and append as a tuple.
     """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
         Input: .mrc or .xml filepath list from get_callable_files.
@@ -42,6 +92,7 @@ def iterate_get_parents(filepath_list): #also get child MMS Id and append as a t
         Output: Dictionary with a index: [id, parent_id]
     """
     index = 0
+    filepath_list.sort()
     if filepath_list[0].endswith(".mrc"):
         try:
             parent_id_dict = {}
@@ -65,7 +116,7 @@ def iterate_get_parents(filepath_list): #also get child MMS Id and append as a t
                 parent_id = get_parent_id(record)
                 if parent_id is not None:
                     parent_id_dict.update({index : [id, parent_id]})
-                    index == 1
+                    index += 1
         except Exception as e:
             logger.error(f"Error iterating parent ids: {e} " 
                     +" 950 $p may be invalid or not present in some records.")
