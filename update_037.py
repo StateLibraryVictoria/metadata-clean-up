@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from sys import exit
 from copy import deepcopy
 from src.shared_functions import *
@@ -115,40 +116,49 @@ exceptions = 0
 list_not_match = []
 list_match = []
 list_has_037 = []
-target_df = valid
+target_df = invalid
 valid_output = os.path.join(merge_path, "updated_records.mrc")
 invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
+replace_fields = ['100', '110', '111', '260', '264','830','655']
 for index, row in target_df.iterrows():
     try:
         match_parent = False
+        # Get 037 from parent record if it matches file_label.
         with open(row['parent_file'], 'rb') as pf:
             p_reader = pymarc.MARCReader(pf)
             for record in p_reader:
-                for subfields in record.get_fields('037'):
-                    if subfields['a'] == row['file_label']:
-                        match_parent = True
-                        counter += 1
-                    elif subfields['a'].replace(" ", "") == row['file_label'].replace(" ", ""):
-                        logger.info("File label was a whitespace match for identifier on parent record: " + row['file_label'])
-                        target_df['file_label'].replace(row['file_label'], subfields['a'], inplace=True) # updates the value in the target df to the parent record value.
-                        row['file_label'] = subfields['a']
-                        logger.info("New file label from parent record: " + row['file_label'])
-                        match_parent = True
-                        counter += 1
+                parent_rec = deepcopy(record)
+                new_label = subfield_is_in_record(record, row['file_label'], '037', 'a')
+                if new_label is not None:
+                    target_df['file_label'].replace(row['file_label'], new_label, inplace=True)
+                    match_parent = True
+                    counter += 1
+                else:
+                    list_not_match.append((row['mms_id'], row['file_label']))
+                    with open(invalid_output, 'ab') as output:
+                        output.write(record.as_marc())
+                    logger.info(f"Record written to exceptions file: {invalid_output}")
+    except Exception as e:
+        print(f"Error getting parent 037 using subfield_is_in_record method {e}")
+    try: # Processing target record
         if match_parent:
             with open(row['filename'], 'rb') as fh:
                 reader = pymarc.MARCReader(fh)
                 for record in reader:
-                    try:
+                    fix_record = deepcopy(record)
+                    fix_record = big_bang_replace(fix_record, parent_rec)
+                    fix_record = fix_245_indicators(fix_record)
+                    try: 
+                        # Check no existing 037
                         if len(record.get_fields('037')) > 0:
                             for identifier in record.get_fields('037'):
                                 list_has_037.append((row['mms_id'], row['file_label'], identifier))
                                 logger.info(f"Record {row['mms_id']} has existing 037: {identifier}. Will not apply file label {row['file_label']}")
                                 with open(invalid_output, 'ab') as output:
-                                    output.write(record.as_marc())
+                                    output.write(fix_record.as_marc())
                                 logger.info(f"Record written to exceptions file: {invalid_output}")
                         else:
-                            identifier_subfield = pymarc.Subfield(code='a', value=row['file_label'])
+                            identifier_subfield = pymarc.Subfield(code='a', value=new_label)
                             field_037 = pymarc.Field(
                                 tag = '037',
                                 indicators = ["\\","\\"],
@@ -157,29 +167,31 @@ for index, row in target_df.iterrows():
                                 pymarc.Subfield(code='b', value='State Library of Victoria')
                                 ]
                             )
-                        record.add_ordered_field(field_037)
-                        record = fix_655_gmgpc(record)
-                        list_match.append(row['mms_id'])
-                        with open(valid_output, 'ab') as output:
-                            output.write(record.as_marc())
+                            fix_record.add_ordered_field(field_037)
+                            fix_record = fix_655_gmgpc(fix_record)
+                            list_match.append(row['mms_id'])
+                            with open(valid_output, 'ab') as output:
+                                output.write(fix_record.as_marc())
                     except Exception as e:
                         logger.error(f"Error adding 037 to record {row['mms_id']}. Error: {e}")
         else:
-            list_not_match.append((row['mms_id'], row['file_label']))
-            exceptions += 1
             logger.info(f"Record {row['mms_id']} accession number {row['file_label']} not in parent record {row['parent_id']}")
             with open(row['filename'], 'rb') as fh:
                 logger.debug(f"Checking record {row['mms_id']} which failed check against parent record doesn't have existing 037.")
                 reader = pymarc.MARCReader(fh)
                 for record in reader:
-                    record = fix_655_gmgpc(record)
+                    fix_record = deepcopy(record)
+                    fix_record = big_bang_replace(fix_record, parent_rec)
+                    fix_record = fix_245_indicators(fix_record)
+                    fix_record = fix_655_gmgpc(fix_record)
                     with open(invalid_output, 'ab') as output:
-                            output.write(record.as_marc())
+                            output.write(fix_record.as_marc())
                     try:
-                        existing_037 = record.get_fields('037')
+                        existing_037 = fix_record.get_fields('037')
                         if len(existing_037) > 0:
                             for field in existing_037:
-                                logger.info(f"Record {row['mms_id']} did not match identifier in parent record also has existing 037 fields.Contains field: {field}")
+                                logger.info(f"Record {row['mms_id']} did not match identifier in parent record" + 
+                                            f" also has existing 037 fields.Contains field: {field}")
                         else:
                             logger.debug("Record doesn't have existing 037")
                     except Exception as e:
