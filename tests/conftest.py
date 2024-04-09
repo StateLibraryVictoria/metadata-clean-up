@@ -7,6 +7,7 @@ ROOT_DIR = os.path.abspath(os.curdir)
 
 # Path variables
 filename = "test_file_with_errors.mrc"
+single_p_record = "record_9933644453607636.mrc"
 test_marc_file = os.path.join(ROOT_DIR, "tests","test_data","marc_data","test_file_with_errors.mrc")
 test_parents = os.path.join(ROOT_DIR, "tests","test_data","marc_data", "parent")
 missing_records = ["9938846603607636"]
