@@ -33,4 +33,6 @@ def test_get_parent_id(input_file, expected):
 
 def test_iterate_get_parent():
     id_list = iterate_get_parents(input_files)
-    assert id_list == {"9939647808307636":"9916783623607636", "9939647812307636": "9922700093607636"}
+    assert id_list[0] == ["9939647808307636", "9916783623607636"]
+    assert id_list[1] == ["9939647812307636", "9922700093607636"]
+    
