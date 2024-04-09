@@ -1,6 +1,7 @@
 import pymarc
 import os
 import logging
+from copy import deepcopy
 import re
 from src.logger_config import *
 
@@ -84,7 +85,10 @@ def get_fields_from_source(source_record, field):
         tag = field.tag
 
     # Check that field in source record.
-    match_fields = source_record.get_fields(tag)
+    if tag.startswith("1"):
+        match_fields = source_record.get_fields('100','110','111','130')
+    else:
+        match_fields = source_record.get_fields(tag)
     if len(match_fields) == 0:
         amount = f"no {tag} fields" if get_field_count(source_record, tag) < 1 else f"too many {tag} fields"
         logger.warning(f"Source record contains {amount}. "
@@ -227,4 +231,57 @@ def record_to_mrc(record, output_filename):
     with open(output_filename, 'ab') as out:
         out.write(record.as_marc())
     out.close()
+
+def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
+    """Returns matching subfield from a record matching either exact or with whitespace stripped.
+
+        Args:
+        record: (pymarc Record object)
+        query: (str) - value expected in field
+        tag: (str)
+    """
+    # check record is Record
+    if not isinstance(record, pymarc.record.Record):
+        raise Exception("Record must be a pymarc Record object.")
+    
+    # get the matched accession numbers
+    for item in record.get_fields(tag):
+        if item[subfield] == query:
+            return query
+        elif item[subfield].replace(" ","") == query.replace(" ",""):
+            return item[subfield]
+        else:
+            continue
+    
+    # log failed records and return None
+    for item in record.get_fields(tag):
+        try:
+            logger.info(f"No match found for {query} in {tag} ${subfield} in record {record['001'].value()}. Record has 037: {item}")
+        except Exception as e:
+                print(f"error adding log for failed query search {e}")
+    return None
+
+def fix_245_indicators(record):
+    """Checks aspects of the 245 in a record and updates indicators"""
+    wr = deepcopy(record)
+    # First indicator - 0 - No added entry, 1 - Added entry (no 1xx)
+    title = wr.title
+    title = title.lower()
+    if len(wr.get_fields('100', '110', '111', '130')) == 0:
+        first_indicator = '1'
+    else:
+        first_indicator = '0'
+    # Second indicator based on small list, else 0.
+    nonfiling = ['the ', 'a ', 'an ', 'le', "l'"] # breaking if I include the [ character, excaped or no.
+    for prefix in nonfiling:
+        if title.startswith(prefix):
+            second_indicator = str(len(prefix))
+        else:
+            second_indicator = '0'
+    for field in wr.get_fields('245'):
+        field.indicator1 = first_indicator
+        field.indicator2 = second_indicator
+        wr.remove_fields('245')
+        wr.add_ordered_field(field)
+    return wr
 
