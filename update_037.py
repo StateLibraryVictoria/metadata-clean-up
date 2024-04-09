@@ -30,7 +30,6 @@ for head in headers:
     if head.startswith("mms_id"):
         expected = df[head].tolist()
         identifiers.extend(expected)
-print(len(identifiers))
 # Get MARC record from API
 output_dir_many = os.path.join("output", "mrc", "split", "many")
 """
@@ -50,18 +49,20 @@ parent_cols = list(parent_df)
 parent_df[parent_cols] = parent_df[parent_cols].astype(str)
 parent_df.mms_id = parent_df.mms_id.str.strip()
 output_dir_parent = os.path.join("output", "mrc", "split", "parent")
-"""try:
+"""
+try:
     get_missing_records([], parent_ids, output_dir)
 except Exception as e:
     print(f"Error retrieving bibs: {e}")
-    logger.error(f"Error retrieving bibs: {e}")"""
+    logger.error(f"Error retrieving bibs: {e}")
+"""
 
 # Create validation file of all records
 merge_path = os.path.join("output","mrc","merge")
 many_validation_report = os.path.join("output","many_records_report.txt")
-parent_validation_report = os.path.join("output","merged_parent_validation_file.mrc")
+#parent_validation_report = os.path.join("output","merged_parent_validation_file.mrc")
 many_merge_name = os.path.join(merge_path, many_validation_report)
-parent_merge_name = os.path.join(merge_path, parent_validation_report)
+#parent_merge_name = os.path.join(merge_path, parent_validation_report)
 #merge_marc_records(output_dir_many, many_merge_name)
 #merge_marc_records(output_dir_parent, parent_merge_name)
 
@@ -70,25 +71,141 @@ parent_merge_name = os.path.join(merge_path, parent_validation_report)
 #validate_mrc_record(parent_merge_name,"parent_record_report.txt")
 
 many_errors = get_list_error_ids(many_validation_report)
-df['filename'] = "record_" + df['mms_id'] + ".mrc"
 df['validation_error'] = df['mms_id'].isin(many_errors)
 # Had to do this extra coding in merge as it wasn't able to join on mms_id even when 
 # both were showing as type object and set using astype(str)
 df_join = pd.merge(df.assign(mms_id=df.mms_id.astype(str)), 
                    parent_df.assign(mms_id=parent_df.mms_id.astype(str)), 
                    how='left', on='mms_id')
-print(df_join.filename.head())
-print(df_join.shape)
+df_join['filename'] = output_dir_many + os.sep + ("record_" + df_join['mms_id'] + ".mrc")
+df_join['parent_file'] = output_dir_parent + os.sep + ("record_" + df_join['parent_id']+".mrc")
 valid = df_join.loc[~df_join.validation_error]
 invalid = df_join.loc[df_join.validation_error]
-print(valid.head())
-print(valid.shape)
-print(invalid.head())
-print(invalid.shape)
 
 # Processing for valid records
+    # 037 process
+"""identifier_subfield = pymarc.Subfield(code='a', value='identifier')
+field_037 = pymarc.Field(
+    tag = '037',
+    indicators = ["",""],
+    subfields = [
+        identifier_subfield,
+        pymarc.Subfield(code='b', value='State Library of Victoria')
+    ]
+)"""
+    # 655 process
 
 # Processing for invalid records
+    # 037 process
+    # 655 process
+    # 260/264
+    # field duplication
+
+# all of them
+# For each row in the df:
+    # Open the file.
+    # Open the parent file.
+    # Turn file label into 037
+    # Check if parent contains identifcal 037
+        # If no - log and output to mismatch file.
+        # Else: add 037 to many record.
+    # Fix 655
+counter = 0
+exceptions = 0
+list_not_match = []
+list_match = []
+list_has_037 = []
+target_df = valid
+valid_output = os.path.join(merge_path, "updated_records.mrc")
+invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
+for index, row in target_df.iterrows():
+    try:
+        match_parent = False
+        with open(row['parent_file'], 'rb') as pf:
+            p_reader = pymarc.MARCReader(pf)
+            for record in p_reader:
+                for subfields in record.get_fields('037'):
+                    if subfields['a'] == row['file_label']:
+                        match_parent = True
+                        counter += 1
+                    elif subfields['a'].replace(" ", "") == row['file_label'].replace(" ", ""):
+                        logger.info("File label was a whitespace match for identifier on parent record: " + row['file_label'])
+                        target_df['file_label'].replace(row['file_label'], subfields['a'], inplace=True) # updates the value in the target df to the parent record value.
+                        row['file_label'] = subfields['a']
+                        logger.info("New file label from parent record: " + row['file_label'])
+                        match_parent = True
+                        counter += 1
+        if match_parent:
+            with open(row['filename'], 'rb') as fh:
+                reader = pymarc.MARCReader(fh)
+                for record in reader:
+                    try:
+                        if len(record.get_fields('037')) > 0:
+                            for identifier in record.get_fields('037'):
+                                list_has_037.append((row['mms_id'], row['file_label'], identifier))
+                                logger.info(f"Record {row['mms_id']} has existing 037: {identifier}. Will not apply file label {row['file_label']}")
+                                with open(invalid_output, 'ab') as output:
+                                    output.write(record.as_marc())
+                                logger.info(f"Record written to exceptions file: {invalid_output}")
+                        else:
+                            identifier_subfield = pymarc.Subfield(code='a', value=row['file_label'])
+                            field_037 = pymarc.Field(
+                                tag = '037',
+                                indicators = ["\\","\\"],
+                                subfields = [
+                                identifier_subfield,
+                                pymarc.Subfield(code='b', value='State Library of Victoria')
+                                ]
+                            )
+                        record.add_ordered_field(field_037)
+                        record = fix_655_gmgpc(record)
+                        list_match.append(row['mms_id'])
+                        with open(valid_output, 'ab') as output:
+                            output.write(record.as_marc())
+                    except Exception as e:
+                        logger.error(f"Error adding 037 to record {row['mms_id']}. Error: {e}")
+        else:
+            list_not_match.append((row['mms_id'], row['file_label']))
+            exceptions += 1
+            logger.info(f"Record {row['mms_id']} accession number {row['file_label']} not in parent record {row['parent_id']}")
+            with open(row['filename'], 'rb') as fh:
+                logger.debug(f"Checking record {row['mms_id']} which failed check against parent record doesn't have existing 037.")
+                reader = pymarc.MARCReader(fh)
+                for record in reader:
+                    record = fix_655_gmgpc(record)
+                    with open(invalid_output, 'ab') as output:
+                            output.write(record.as_marc())
+                    try:
+                        existing_037 = record.get_fields('037')
+                        if len(existing_037) > 0:
+                            for field in existing_037:
+                                logger.info(f"Record {row['mms_id']} did not match identifier in parent record also has existing 037 fields.Contains field: {field}")
+                        else:
+                            logger.debug("Record doesn't have existing 037")
+                    except Exception as e:
+                        logger.error(f"Error checking for existing 037 in record {row['mms_id']}.")
+                    logger.info(f"Record {row['mms_id']} written to exceptions file: {invalid_output}")
+    except Exception as e:
+        print(f"Error opening file from pandas df: {e}")
+        logger.error(f"Error opening file from pandas df: {e}")
+for item in list_match:
+    if item in list_not_match:
+        print("Item in both lists:")
+        print(item)
+        print("End")
+
+# Print out errors for the operator to handle.
+logger.info("Summary of exceptions")
+for id, acc in list_not_match:
+    print(f"Failed accession record match for {id} with file label: {acc}")
+    logger.info(f"Failed accession record match for {id} with file label: {acc}")
+for id, acc, exi in list_has_037:
+    print(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
+    logger.info(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
+
+# Merge into post_processing_output
+
+# Validate and return how many records failed.
 
 """This group is filtered from Description Original Material accession numbers. Records in this category are believed to have the lowest risk of duplication or exceptions.
 
