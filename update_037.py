@@ -61,15 +61,19 @@ except Exception as e:
 # Create validation file of all records
 merge_path = os.path.join("output","mrc","merge")
 many_validation_report = os.path.join("output","many_records_report.txt")
-#parent_validation_report = os.path.join("output","merged_parent_validation_file.mrc")
+parent_validation_report = os.path.join("output","merged_parent_validation_file.mrc")
 many_merge_name = os.path.join(merge_path, many_validation_report)
-#parent_merge_name = os.path.join(merge_path, parent_validation_report)
-#merge_marc_records(output_dir_many, many_merge_name)
-#merge_marc_records(output_dir_parent, parent_merge_name)
+parent_merge_name = os.path.join(merge_path, parent_validation_report)
+"""
+merge_marc_records(output_dir_many, many_merge_name)
+merge_marc_records(output_dir_parent, parent_merge_name)
+"""
 
 # Run validation on records
-#validate_mrc_record(many_merge_name, "many_records_report.txt")
-#validate_mrc_record(parent_merge_name,"parent_record_report.txt")
+"""
+validate_mrc_record(many_merge_name, "many_records_report.txt")
+validate_mrc_record(parent_merge_name,"parent_record_report.txt")
+"""
 
 many_errors = get_list_error_ids(many_validation_report)
 df['validation_error'] = df['mms_id'].isin(many_errors)
@@ -116,7 +120,7 @@ exceptions = 0
 list_not_match = []
 list_match = []
 list_has_037 = []
-target_df = invalid
+target_df = df_join
 valid_output = os.path.join(merge_path, "updated_records.mrc")
 invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
 replace_fields = ['100', '110', '111', '260', '264','830','655']
@@ -147,7 +151,8 @@ for index, row in target_df.iterrows():
                 for record in reader:
                     fix_record = deepcopy(record)
                     fix_record = big_bang_replace(fix_record, parent_rec)
-                    fix_record = fix_245_indicators(fix_record)
+                    fix_record = fix_indicators(fix_record)
+                    fix_record = fix_655_gmgpc(fix_record)
                     try: 
                         # Check no existing 037
                         if len(record.get_fields('037')) > 0:
@@ -168,7 +173,6 @@ for index, row in target_df.iterrows():
                                 ]
                             )
                             fix_record.add_ordered_field(field_037)
-                            fix_record = fix_655_gmgpc(fix_record)
                             list_match.append(row['mms_id'])
                             with open(valid_output, 'ab') as output:
                                 output.write(fix_record.as_marc())
@@ -182,7 +186,7 @@ for index, row in target_df.iterrows():
                 for record in reader:
                     fix_record = deepcopy(record)
                     fix_record = big_bang_replace(fix_record, parent_rec)
-                    fix_record = fix_245_indicators(fix_record)
+                    fix_record = fix_indicators(fix_record)
                     fix_record = fix_655_gmgpc(fix_record)
                     with open(invalid_output, 'ab') as output:
                             output.write(fix_record.as_marc())
@@ -215,28 +219,4 @@ for id, acc, exi in list_has_037:
     print(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
     logger.info(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
 
-# Merge into post_processing_output
-
 # Validate and return how many records failed.
-
-"""This group is filtered from Description Original Material accession numbers. Records in this category are believed to have the lowest risk of duplication or exceptions.
-
-Count of records: 1448  
-Accession number types: H, MS, LT, YLT  
-
-Processing plan:  
-
-Use API to retrieve MMS Ids from list.
-For each MMS Id in list, query and retireve parent MMS Id.
-Run validation on MANY records
-
-Perform checks (failures should be added to exceptions file for further investigation)  
-- The accession number is on the parent record. [RAISE NOT ON PARENT]
-- The parent record doesn't have a version of the accession number with a further subdivision. [RAISE SUBDIVIDED]
-- Titles are the same (ignoring brackets). [RAISE DIFFERENT TITLE]
-- The parent 520 / 505 doesn't reference the identifier specifically.
-    - if it does, can we copy that data into the child?
-- There are 540 and 542 fields in the record.
-- 655 has $2
-- 655 fix trailing period on gmgpc
-- Other checks, 260/264/008, 245/100, """
