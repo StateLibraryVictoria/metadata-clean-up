@@ -177,9 +177,6 @@ def merge_marc_records(directory, output_filename):
                         output.write(record.as_marc())
     except Exception as e:
         logger.error(f"Error merging MARC records: {e}")
-
-    # walk directory and open mrc files.
-    # Write each one into compiled file.
     return None
 
 def get_list_error_ids(validator_report):
