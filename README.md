@@ -46,12 +46,14 @@ This requires two environment variables:
 #### process_marc_file.py
 
 Takes a MARC file as input. Splits the records into parent and many record directories, then calls the API to retrieve missing identifiers and writes the records to the parent directory.
-Iterates through the many records and updates the 100, 110, 260 and 264, overwriting the split many records with the new values and creating a logfile of changes.
+Iterates through the many records and performs the following:
+- replaces 1xx, 260/264, 6xx, 7xx, 8xx from parent record.
+- fixes indicators.
+- fixes 655 trailing punctuation on $2 gmgpc subject headings.
+Requests user input for output filename and creates a MarcEdit validation report in the same direcotry.
 
-**Next steps**  
-- output updated records to single file
-- validate with MarcEdit
-- create unit tests for related processes
+
+### In development scripts 
 
 #### run_call.py
 
@@ -60,7 +62,11 @@ Retrieves a list of MMS Ids supplied as a csv value in the environment variable 
 **Required updates**
 - requires further steps to retrieve parent records and perform record matching.
 
-### Supporting functions
+#### update_037.py
+
+Script for updating accession numbers from another list. Takes a list with accession numbers and mms ids and uses pandas to manage record handling. 
+
+## Supporting functions
 
 These functions are not split in optimal ways so will need to be re-worked into more logical files.
 
