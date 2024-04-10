@@ -52,18 +52,8 @@ parent_ids.sort()
 # get required parents
 get_missing_records(parent_records,parent_ids,parent_records_path)
 
-def get_ids(record):
-    try:
-        pid = record['950']['p']
-    except KeyError:
-        pid = "Not in record."
-    try:
-        id = record.get_fields('001')[0].value()
-    except KeyError:
-        id = "Value not in 001."
-    return id, pid
-
 def get_files_list(directory):
+    """Returns file paths for all files in specified directory"""
     output_array = []
     for root, dirs, files in os.walk(directory):
         for file in files:
@@ -93,20 +83,19 @@ for file in many_files:
             parent_reader = pymarc.MARCReader(open(parent_file, 'rb'))
             for record in parent_reader:
                 try:
-                    new_record = replace_field(current_record, record, "100")
+                    current_record = big_bang_replace(current_record, record)
                 except Exception as e:
-                    print(f"Replacing field 100 did not work. Error: {e}")
+                    print(f"Big bang replace method failed. Error: {e}")
+                    logger.error(f"Big bang replace method failed. Error: {e}")
                 try:
-                    new_record = replace_field(new_record, record, "110")
+                    current_record = fix_indicators(current_record)
                 except Exception as e:
-                    print(f"Replacing field 110 did not work. Error: {e}")
+                    print(f"Error replacing indicators. Error: {e}")
+                    logger.error(f"Error replacing indicators. Error: {e}")
                 try:
-                    new_record = replace_field(new_record, record, "264")
+                    current_record = fix_655_gmgpc(current_record)
                 except Exception as e:
-                    print(f"Error replacing field 264. Error: {e}")
-                try:
-                    new_record = replace_field(new_record, record, "260")
-                except Exception as e:
-                    print(f"Error replacing field 260. Error: {e}")
+                    print(f"Error fixing 655 gmgpc subject headings. Error: {e}")
+                    logger.error(f"Error fixing 655 gmgpc subject headings. Error: {e}")
     with open(file, 'wb') as out:
-        out.write(new_record.as_marc())
+        out.write(current_record.as_marc())
