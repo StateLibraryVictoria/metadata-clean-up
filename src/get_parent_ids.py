@@ -10,6 +10,8 @@ logger = logging.getLogger()
 
 
 def big_bang_replace(many_record, parent_record):
+    """Replaces fields based on the big bang cleanup project.
+    Fields 1xx, 260/264, 6xx, 7xx, 8xx are copied from parent to many record."""
     fix_record = deepcopy(many_record)
     onexx = ['100', '110', '111', '130']
     pub_year = ['260', '264']
