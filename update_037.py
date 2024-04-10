@@ -220,3 +220,7 @@ for id, acc, exi in list_has_037:
     logger.info(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
 
 # Validate and return how many records failed.
+valid_path, valid_name = os.path.split(valid_output)
+output_file_with_validation(valid_path, valid_path, filename=valid_name, merged=True)
+invalid_path, invalid_name = os.path.split(invalid_output)
+output_file_with_validation(invalid_path, invalid_path, filename=invalid_name, merged=True)
