@@ -199,6 +199,7 @@ def replace_field(target_record, source_record, field):
     
 
 def fix_655_gmgpc(record):
+    """Fixes trailing punctuation from 655 with $2 gmgpc subject headings."""
     fields = record.get_fields('655')
 
     for field in fields:
@@ -213,6 +214,7 @@ def fix_655_gmgpc(record):
     return record
 
 def is_parent(record):
+    """Returns True if 956$b == PARENT"""
     fields = record.get_fields('956')
     for field in fields:
         if field['b'] == "PARENT":
@@ -342,3 +344,12 @@ def fix_1xx_ind2(record):
         wr.add_ordered_field(field)
     return wr
 
+def fix_indicators(record):
+    """Applies fixes for 1xx-ind2, 245-ind1, 245-ind2, 773-ind1, 830-ind2.
+    """
+    wr = deepcopy(record)
+    wr = fix_1xx_ind2(wr)
+    wr = fix_245_indicators(wr)
+    wr = fix_773_ind1(wr)
+    wr = fix_830_ind2(wr)
+    return wr
