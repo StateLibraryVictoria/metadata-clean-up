@@ -1,4 +1,5 @@
 from os import path
+from copy import deepcopy
 import pytest
 from pymarc import Field, Subfield
 
@@ -172,28 +173,20 @@ def test_is_parent(input_file, expected):
     record = load_pymarc_record(input_file)
     assert is_parent(record) == expected
 
+
+
 def test_subfield_is_in_record_type_handling():
     with pytest.raises(Exception) as e_info:
         subfield_is_in_record("not-a-reord","query","100",'a')
 
-def test_subfield_is_in_record_single_record(missing_parents):
-    for root, dirs, files in os.walk(missing_parents):
-        files.sort()
-        file = os.path.join(missing_parents, files[0])
-    with open(file, 'rb') as fh:
-        reader = pymarc.MARCReader(fh)
-        for record in reader:
-            returned = subfield_is_in_record(record, 'CUASM213/7', '037', 'a')
+def test_subfield_is_in_record_single_record(single_parent_record):
+    record = deepcopy(single_parent_record)
+    returned = subfield_is_in_record(record, 'CUASM213/7', '037', 'a')
     assert returned == "CUASM213/7"
 
-def test_subfield_is_in_record_whitespace(missing_parents):
-    for root, dirs, files in os.walk(missing_parents):
-        files.sort()
-        file = os.path.join(missing_parents, files[0])
-    with open(file, 'rb') as fh:
-        reader = pymarc.MARCReader(fh)
-        for record in reader:
-            returned = subfield_is_in_record(record, 'CUASM213 / 7', '037', 'a')
+def test_subfield_is_in_record_whitespace(single_parent_record):
+    record = deepcopy(single_parent_record)
+    returned = subfield_is_in_record(record, 'CUASM213 / 7', '037', 'a')
     assert returned == "CUASM213/7"
 
 def test_fix_245_indicators(temp_marc_file):
@@ -204,3 +197,112 @@ def test_fix_245_indicators(temp_marc_file):
                 new_record = fix_245_indicators(record)
                 break
     assert new_record['245'].indicator2 == '0'
+
+# 245 fields
+field_245_correct_ind2 = pymarc.Field(
+    tag = '245',
+    indicators = ['0', '5'],
+    subfields = [
+        pymarc.Subfield(code='a', value='[The test case] :'),
+        pymarc.Subfield(code='b', value='a test /'),
+        pymarc.Subfield(code='c', value='Testington Jones')
+    ]
+)
+# This case is because the program is not capable of fixing human error in recording
+# only of replacing empty with data.
+field_245_correct_ind2_data_mismatch = pymarc.Field(
+    tag = '245',
+    indicators = ['0', '5'],
+    subfields = [
+        pymarc.Subfield(code='a', value='[Test case] :'), # should be 1
+        pymarc.Subfield(code='b', value='a test /'),
+        pymarc.Subfield(code='c', value='Testington Jones')
+    ]
+)
+
+field_245_incorrect_ind2_bracket = pymarc.Field(
+    tag = '245',
+    indicators = ['0', '#'],
+    subfields = [
+        pymarc.Subfield(code='a', value='[The test case] :'),
+        pymarc.Subfield(code='b', value='a test /'),
+        pymarc.Subfield(code='c', value='Testington Jones')
+    ]
+)
+
+test_245s = [field_245_correct_ind2, field_245_correct_ind2_data_mismatch, field_245_incorrect_ind2_bracket]
+
+@pytest.mark.parametrize("set_field", test_245s, indirect=["set_field"])
+def test_fix_245_only_changes_unset_ind2(field_replace_record):
+    record = deepcopy(field_replace_record)
+    record = fix_245_indicators(record)
+    assert record['245'].indicator2 == '5'
+
+@pytest.mark.parametrize("set_field", test_245s, indirect=["set_field"])
+def test_set_245_ind1_to_1(field_replace_record):
+    record = deepcopy(field_replace_record)
+    record.remove_fields('100', '110', '111', '130')
+    record = fix_245_indicators(record)
+    assert record['245'].indicator1 == '1'
+
+@pytest.mark.parametrize("input, expected",
+                        [
+                            ("the title", 4), 
+                            ("[the title",5),
+                            ("l'title", 2), 
+                            ("xyz", 0), 
+                            ('123', 0)
+                            ]
+                            )
+def test_get_nonfiling_characters(input, expected):
+    assert len(get_nonfiling_characters(input)) == expected
+
+field_830_invalid_ind2_bracket_5 = pymarc.Field(
+    tag = '830',
+    indicators = ['0', '#'],
+    subfields = [
+        pymarc.Subfield(code='a', value='[The test case] :'),
+    ]
+)
+
+field_830_invalid_ind2_bracket_0 = pymarc.Field(
+    tag = '830',
+    indicators = ['0', '#'],
+    subfields = [
+        pymarc.Subfield(code='a', value='abcde :'),
+    ]
+)
+
+field_830_valid_ind2_bracket = pymarc.Field(
+    tag = '830',
+    indicators = ['0', '5'], # wrong value to make sure it doesn't change when set
+    subfields = [
+        pymarc.Subfield(code='a', value="L'elephant"), # Would be 2 if changed
+    ]
+)
+
+test_830s = [field_830_invalid_ind2_bracket_5, field_830_invalid_ind2_bracket_0, field_830_valid_ind2_bracket]
+
+@pytest.mark.parametrize("set_field", test_830s, indirect=["set_field"])
+def test_830_fix_ind2(field_replace_record):
+    record = deepcopy(field_replace_record)
+    record = fix_830_ind2(record)
+    assert record['830'].indicator2 in ['0', '5']
+
+def test_830_fix_when_no_830(single_parent_record):
+    record = deepcopy(single_parent_record)
+    record.remove_fields('830')
+    wr = fix_830_ind2(record)
+    assert wr == record
+    
+bad_773_field = pymarc.Field(
+    tag = '773',
+    indicators = ['/', '/']
+)
+
+def test_fix_773_ind1(single_parent_record):
+    record = deepcopy(single_parent_record)
+    record.remove_fields('773')
+    record.add_ordered_field(bad_773_field)
+    wr = fix_773_ind1(record)
+    assert wr['773'].indicator1 == "0"
