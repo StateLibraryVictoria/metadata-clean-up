@@ -1,5 +1,6 @@
 import pymarc
 import os
+import re
 import logging
 from copy import deepcopy
 import re
@@ -261,27 +262,83 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
                 print(f"error adding log for failed query search {e}")
     return None
 
+def get_nonfiling_characters(string):
+    nonfiling = "^(\W?)(the |an |a |le |l')?\s*"
+    query = re.search(nonfiling, string)
+    return query.group()
+
 def fix_245_indicators(record):
     """Checks aspects of the 245 in a record and updates indicators"""
     wr = deepcopy(record)
     # First indicator - 0 - No added entry, 1 - Added entry (no 1xx)
     title = wr.title
     title = title.lower()
+
+    # fix first indicator
     if len(wr.get_fields('100', '110', '111', '130')) == 0:
         first_indicator = '1'
     else:
         first_indicator = '0'
-    # Second indicator based on small list, else 0.
-    nonfiling = ['the ', 'a ', 'an ', 'le', "l'"] # breaking if I include the [ character, excaped or no.
-    for prefix in nonfiling:
-        if title.startswith(prefix):
-            second_indicator = str(len(prefix))
+    # If second indicator is not numeric, get nonfiling and calculate length.
+    valid_ind2 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    current_ind2 = wr['245'].indicator2
+    if current_ind2 not in valid_ind2:
+        prefix_store = get_nonfiling_characters(title)
+        if prefix_store is not None:
+            second_indicator = str(len(prefix_store))
         else:
             second_indicator = '0'
+    else:
+        second_indicator = wr['245'].indicator2
+
     for field in wr.get_fields('245'):
         field.indicator1 = first_indicator
         field.indicator2 = second_indicator
-        wr.remove_fields('245')
+    wr.remove_fields('245')
+    wr.add_ordered_field(field)
+    return wr
+
+# Fix 773-ind1 : 0 - Display note, 1 - Do not display note
+def fix_830_ind2(record):
+    # Check if record has 830.
+    fix_830 = record.get_fields('830')
+    if len(fix_830) == 0:
+        return record
+    # Process existing 830s
+    wr = deepcopy(record)
+    wr.remove_fields('830')
+    valid_ind2 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    for field in fix_830:
+        if field.indicator2 not in valid_ind2:
+            try:
+                title = field['a']
+                field.indicator2 = str(len(get_nonfiling_characters(title.lower())))
+                wr.add_ordered_field(field)
+            except Exception as e:
+                print(f"Error getting subfield $a from 830: {e}")
+                logger.error(f"Error for record {wr['001'].value()} getting subfield $a from 830: {e}")
+    return record
+            
+def fix_773_ind1(record):
+    fix_730 = record.get_fields('773')
+    if len(fix_730) == 0:
+        return record
+    wr = deepcopy(record)
+    wr.remove_fields('773')
+    for field in fix_730:
+        if field.indicator1 not in ['0', '1']:
+            field.indicator1 = '0'
+        wr.add_ordered_field(field)
+    return wr
+    
+def fix_1xx_ind2(record):
+    xx1 = record.get_fields('100', '110', '111', '130')
+    if len(xx1) == 0:
+        return record
+    wr = deepcopy(record)
+    wr.remove_fields('100', '110', '111', '130')
+    for field in xx1:
+        field.indicator2 = "\\"
         wr.add_ordered_field(field)
     return wr
 
