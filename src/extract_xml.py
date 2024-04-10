@@ -32,8 +32,8 @@ Output: filestream.
 
 
 def open_files(filename):
-    file = open(filename, "r", encoding="utf-8", errors="backslashreplace")
-    file_loaded = file.read()
+    with open(filename, "r", encoding="utf-8", errors="backslashreplace") as file:
+        file_loaded = file.read()
     return file_loaded
 
 
@@ -60,17 +60,18 @@ def write_records(dictionary, output_dir):
     logger.debug(f"Created file for records: {final_list}")
 
 
-"""
-Input: directory where the files are held.
-    Calls the following methods:
-    - open_files
-    - get_records
-    - write_records
-Output: writes the files to the desired location.
-"""
+
 
 
 def iterate_directory(dir_name, output_dir):
+    """
+    Input: directory where the files are held.
+        Calls the following methods:
+        - open_files
+        - get_records
+        - write_records
+    Output: writes the xml files to the desired location.
+    """
     logger.debug("Inside iterate_directory")
     for root, dirs, files in walk(dir_name):
         logger.debug(files)
