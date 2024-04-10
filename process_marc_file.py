@@ -5,6 +5,7 @@ from src.shared_functions import *
 from src.xml_load_and_process import *
 from src.get_parent_ids import *
 from src.logger_config import *
+from src.transform_marc_file import *
 
 
 
@@ -99,3 +100,23 @@ for file in many_files:
                     logger.error(f"Error fixing 655 gmgpc subject headings. Error: {e}")
     with open(file, 'wb') as out:
         out.write(current_record.as_marc())
+
+# Write file to joined location.
+print("Enter filename for merged marc file (include .mrc extension).")
+merge_filename = input()
+if not merge_filename.endswith(".mrc"):
+    print("Filename must end with .mrc. Please enter:")
+    merge_filename = input()
+merge_path = os.path.join("output","mrc","merge")
+merge_output = os.path.join(merge_path,merge_filename)
+try:
+    merge_marc_records(many_records_path, merge_output)
+    print(f"File has been created at: {merge_output}")
+except Exception as e:
+    print(f"Merge failed: {e}")
+try:
+    validation_filename = merge_output.replace(".mrc", "_validation.txt")
+    validate_mrc_record(merge_output, validation_filename)
+    print("Validation file has been created at the same location with the suffix _validation.txt")
+except Exception as e:
+    print(f"Validation of merged records faild: {e}")
