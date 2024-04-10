@@ -52,3 +52,14 @@ def test_split_marc_records_equals_expected(missing_parents, temp_marc_file):
     for root, dir, files in os.walk(location):
         files.sort()
         assert files == expected_ids
+
+# Test merge_marc_records(directory, output_filename)
+
+# Test get_identifiers_from_spreadsheet(filename):
+
+# Test get_list_error_ids(validator_report)
+def test_get_list_error_ids(get_validation_report):
+    ids = get_list_error_ids(get_validation_report)
+    assert len(ids) == 386
+    assert "9939647904007636" in ids
+    assert "9939662982307636" in ids
