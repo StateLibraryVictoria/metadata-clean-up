@@ -1,6 +1,8 @@
 import pytest
+import pymarc
 import shutil
 import os
+from copy import deepcopy
 
 # Set the project root to resolve source file.
 ROOT_DIR = os.path.abspath(os.curdir)
@@ -11,6 +13,8 @@ single_p_record = "record_9933644453607636.mrc"
 test_marc_file = os.path.join(ROOT_DIR, "tests","test_data","marc_data","test_file_with_errors.mrc")
 test_parents = os.path.join(ROOT_DIR, "tests","test_data","marc_data", "parent")
 missing_records = ["9938846603607636"]
+validation_fn = "many_records_report.txt" # report generated on 1448 records and found 386 w/ errors
+validation_report = os.path.join(ROOT_DIR, "tests","test_data","validation", validation_fn)
 
 # Create MARC file
 @pytest.fixture(scope="session")
@@ -68,3 +72,31 @@ def missing_parents(tmp_path_factory):
         print(f"Error occured copying parents in test: {e}")   
     output = os.path.join(location, output_dir)
     yield output
+
+@pytest.fixture(scope='session')
+def single_parent_record(missing_parents):
+    file = os.path.join(missing_parents, "record_9933644453607636.mrc")
+    with open(file, 'rb') as mf:
+        reader = pymarc.MARCReader(mf)
+        for record in reader:
+            wf = record
+    yield wf
+
+@pytest.fixture(scope="function")
+def set_field(request):
+    field = request.param
+    return field
+
+@pytest.fixture(scope="function")
+def field_replace_record(single_parent_record, set_field):
+    wr = deepcopy(single_parent_record)
+    field = set_field
+    wr.remove_fields(field.tag)
+    wr.add_field(field)
+    yield wr
+
+@pytest.fixture(scope="session")
+def get_validation_report(tmp_path_factory):
+    vfn = tmp_path_factory.getbasetemp() / validation_fn
+    shutil.copyfile(validation_report, vfn)
+    yield vfn
