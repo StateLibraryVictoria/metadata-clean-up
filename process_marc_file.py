@@ -113,8 +113,11 @@ for file in many_files:
                     logger.error(f"Error fixing 655 gmgpc subject headings. " \
                                  + f"Error: {e}")
     with open(file, "wb") as out:
-        out.write(current_record.as_marc())
+        try:
+            out.write(current_record.as_marc())
+        except Exception as e:
+            logger.error(f"Error writing record to file: {e}")
 
 # Write file to joined location.
 merge_path = os.path.join("output", "mrc", "merge")
-generate_output_file_with_validation(many_records_path, merge_path)
+output_file_with_validation(many_records_path, merge_path)
