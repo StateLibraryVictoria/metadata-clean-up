@@ -70,7 +70,7 @@ def iterate_directory(dir_name, output_dir):
         - open_files
         - get_records
         - write_records
-    Output: writes the xml files to the desired location.
+    Output: writes the files to the desired location.
     """
     logger.debug("Inside iterate_directory")
     for root, dirs, files in walk(dir_name):
