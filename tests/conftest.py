@@ -74,7 +74,7 @@ def missing_parents(tmp_path_factory):
     yield output
 
 @pytest.fixture(scope='session')
-def single_parent_record(missing_parents):
+def single_record(missing_parents):
     file = os.path.join(missing_parents, "record_9933644453607636.mrc")
     with open(file, 'rb') as mf:
         reader = pymarc.MARCReader(mf)
@@ -83,16 +83,18 @@ def single_parent_record(missing_parents):
     yield wf
 
 @pytest.fixture(scope="function")
-def set_field(request):
+def set_field_list(request):
     field = request.param
     return field
 
 @pytest.fixture(scope="function")
-def field_replace_record(single_parent_record, set_field):
-    wr = deepcopy(single_parent_record)
-    field = set_field
-    wr.remove_fields(field.tag)
-    wr.add_field(field)
+def field_replace_record(single_record, set_field_list):
+    wr = deepcopy(single_record)
+    fields = set_field_list
+    for field in fields:
+        wr.remove_fields(field.tag)
+    for field in fields:
+        wr.add_field(field)
     yield wr
 
 @pytest.fixture(scope="session")
