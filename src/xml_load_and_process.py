@@ -205,7 +205,7 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     return None
 
 def get_nonfiling_characters(string):
-    nonfiling = "^(\W?)(the |an |a |le |l')?\s*"
+    nonfiling = r"^(\W?)(the |an |a |le |l')?\s*"
     query = re.search(nonfiling, string)
     return query.group()
 
