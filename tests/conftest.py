@@ -46,8 +46,10 @@ def setup_working_directory(tmp_path_factory):
     output_path_xml = os.path.join("output","xml")
     parent_records_path = os.path.join(output_path_mrc,"parent")
     many_records_path = os.path.join(output_path_mrc,"many")
+    output_path_mrc_merge = os.path.join("output", "mrc","merge")
     paths = [log_path, input_path, processed_path, exception_path, output_path_mrc, 
-             input_path_mrc, output_path_xml, parent_records_path, many_records_path]
+             input_path_mrc, output_path_xml, parent_records_path, many_records_path, 
+             output_path_mrc_merge]
     
     for path in paths:
         if not os.path.exists(path):
