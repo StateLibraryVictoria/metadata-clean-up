@@ -7,15 +7,16 @@ debug_log_config("extract-xml")
 logger = logging.getLogger()
 
 
-"""
-Input: json file
-Processing: json.loads(file) converts ASCII backslash replaced characters with UTF-8.
-Generates a list of records as dictionary "mms_id" : "xml" key value pairs.
-"""
 
 
-def get_record(json_file):
-    bibs = json.loads(json_file)
+def get_record_from_json(json_object):
+    """
+    Input: json file
+    Processing: json.loads(file) converts ASCII backslash replaced characters with UTF-8.
+    Generates a list of records as dictionary "mms_id" : "xml" key value pairs.
+    """
+
+    bibs = json.loads(json_object)
     logger.debug("Json loaded from api output")
     records = {}
     for item in bibs["bib"]:
@@ -25,80 +26,54 @@ def get_record(json_file):
     return records
 
 
-"""
-Input: filename.
-Output: filestream.
-"""
+def iterate_returned_requests(dir_name, output_dir):
+    """Processes json files retrieved from Alma API to xml records.
 
+    args:
+        dir_name (path) - location of json files.
+        output_dir (path) - output directory for xml files.
+        
+    Processing:
+        - Opens each file in the directory.
+        - Gets MARCxml record from json as a dict of 'mms_id':'xml'.
+        - Strips header which contains incorrect encoding.
 
-def open_files(filename):
-    with open(filename, "r", encoding="utf-8", errors="backslashreplace") as file:
-        file_loaded = file.read()
-    return file_loaded
-
-
-"""
-Input: dictionary with mms id keys and xml records.
-Output: Record to file in ./output/xml
-
-"""
-
-
-def write_records(dictionary, output_dir):
-    log_list = []
-    for key in dictionary:
-        file = open(
-            path.join(output_dir, f"record_{key}.xml"),
-            "w",
-            encoding="utf-8",
-            errors="backslashreplace",
-        )
-        file.write(dictionary[key][0])
-        log_list += [key]
-        file.close()
-    final_list = ";".join(log_list)
-    logger.debug(f"Created file for records: {final_list}")
-
-
-
-
-
-def iterate_directory(dir_name, output_dir):
-    """
-    Input: directory where the files are held.
-        Calls the following methods:
-        - open_files
-        - get_records
-        - write_records
     Output: writes the files to the desired location.
     """
     logger.debug("Inside iterate_directory")
     for root, dirs, files in walk(dir_name):
         logger.debug(files)
+        log_list = []
         for file in files:
             filename = path.join(dir_name, file)
             try:
-                data = open_files(filename)
-                records = get_record(data)
-                fixed_header = fix_header_encoding(records)
-                write_records(fixed_header, output_dir)
+                with open(filename, "r", encoding="utf-8", errors="backslashreplace") as json_file:
+                    json = json_file.read()
+                records = get_record_from_json(json)
+                for key in records:
+                    try:
+                        records.update({key:(fix_xml_header_encoding(records[key][0]))})
+                        with open(path.join(output_dir, f'record_{key}.xml', 'w',encoding="utf-8", errors="backslashreplace",)) as file:
+                                file.write(records[key])
+                                log_list.append(key)
+                    except Exception as e:
+                        logger.error(f"Error updating encoding for record {key}: {e}")
                 logger.info("Records written to: " + output_dir)
+                final_list = ";".join(log_list)
+                logger.debug(f"Created file for records: {final_list}")
             except Exception as e:
                 logger.error(f"Error occured while iterating dictionary: {e}")
                 break
         return True
 
 
-"""
-Input: Dictionary containing MMS Id, xml record pairs.
-Processing: Replace utf-16 with utf-8 in header.
-Output: Transformed dictionary
-"""
-
-
-def fix_header_encoding(dictionary):
-    for key in dictionary:
-        string = dictionary[key][0]
-        string = string.replace('<?xml version="1.0" encoding="UTF-16"?>', "")
-        dictionary[key][0] = string
-    return dictionary
+def fix_xml_header_encoding(xml_record):
+    """Strips xml header encoding from xml records supplied as strings.
+    """
+    if '<record>' in xml_record:
+        if xml_record.startswith('<?xml version'):
+            xml_record = xml_record.replace('<?xml version="1.0" encoding="UTF-16"?>', "")
+        return xml_record
+    else:
+        print("Could not find tag <record> in data.")
+        return None

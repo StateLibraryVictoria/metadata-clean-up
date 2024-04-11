@@ -28,33 +28,30 @@ spec_char_xml_read = spec_char_expected_xml.read()
 
 ## Tests
 
-@pytest.mark.parametrize("input, local_path", [(single_file_read, single_path), (spec_char_input_read, spec_char_file_path)])
-def test_open_files(input, local_path):
-    file = open_files(local_path)
-    comparison = input
-    assert len(file) > 0
-    assert file == comparison
-
 @pytest.mark.parametrize("input, expected", [(single_file_read, 1), (spec_char_input_read, 3)])
-def test_get_records_dictionary_size(input, expected):
-    records = get_record(input)
+def test_get_records_from_json_dictionary_size(input, expected):
+    records = get_record_from_json(input)
     assert len(records) == expected
 
 
 @pytest.mark.parametrize("input, expected, id", [(single_file_read, single_file_expected_read, single_file_id), (spec_char_input_read, spec_char_xml_read, spec_char_id)])
-def test_get_records_first_matches_expected(input, expected, id):
+def test_get_record_from_json_first_matches_expected(input, expected, id):
     test_data = input
     expected_data = expected
-    records = get_record(test_data)
+    records = get_record_from_json(test_data)
     target = records[id][0]
     assert target == expected_data
 
-@pytest.mark.parametrize("input, expected, id", [(single_file_read, "<record>", single_file_id), (spec_char_input_read, "<record>", spec_char_id)])
-def test_fix_header_encoding(input, expected, id):
-    test_data = input
-    records = get_record(test_data)
-    header_replaced = fix_header_encoding(records)
-    target = header_replaced[id][0]
-    assert target.startswith(expected)
+xml_header_pass = "<?xml version=\"1.0\" encoding=\"UTF-16\"?><record>record content</record>"
+xml_no_header_pass = r"<record>record content</record>"
 
+@pytest.mark.parametrize("input, expected", [(xml_header_pass, "<record>"), (xml_no_header_pass, "<record>")])
+def test_fix_xml_header_encoding(input, expected):
+    header_replaced = fix_xml_header_encoding(input)
+    assert header_replaced.startswith(expected)
+    assert header_replaced.endswith(expected.replace("<", "</"))
 
+@pytest.mark.parametrize("input", [("xyz"), ("1234")])
+def test_fix_xml_header_error_handling(input):
+    header_replaced = fix_xml_header_encoding(input)
+    assert header_replaced == None
