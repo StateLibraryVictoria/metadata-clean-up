@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 # local build folders
-input/
-json/
-output/
+/input
+/json
+/output
 .vscode/
