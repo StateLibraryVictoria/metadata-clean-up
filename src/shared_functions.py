@@ -33,6 +33,16 @@ def setup_directories():
     # create logfile location
     open(os.path.join(log_path, "log_log_file.log"),'a')
 
+def get_callable_files(dir_name):
+    """Get a list of filepaths in target directory"""
+    output_list = []
+    try:
+        for root, dirs, files in os.walk(dir_name):
+            files.sort()
+            output_list = [path.join(dir_name, file) for file in files]
+        return output_list
+    except Exception as e:
+        logger.error(f"Error getting callable files: {e}")
 
 def split_marc_records(input_filename):
     """Splits mrc records into Parent and Many records and returns a dictionary of identifiers.

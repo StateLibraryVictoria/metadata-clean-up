@@ -6,6 +6,35 @@ from src.shared_functions import *
 Data for this section is defined in conftest.py.
 """
 
+# Setup test data
+def load_test_files(filename):
+    data = open(os.path.join(filename), 'r', encoding="utf-8", errors='backslashreplace')
+    return data.read()
+
+ROOT_DIR = os.path.abspath(os.curdir)
+
+## Type should be input or expected
+def create_file_array(test_data, type):
+    input_path = os.path.join(test_data, type)
+    for root, dir, files in os.walk(input_path):
+        files.sort()
+        output_list = [path.join(input_path, file) for file in files]
+    return output_list
+
+data_path = path.join(ROOT_DIR,"tests","test_data","xml_load_and_process")
+input_path = os.path.join(data_path,'input')
+
+## input files
+input_files = create_file_array(data_path, "input")
+korean_example = input_files[0]
+chinese_example = input_files[1]
+photo_example_01 = input_files[2]
+photo_example_02 = input_files[3]
+
+source_path = os.path.join(data_path, "source", "source_record.xml")
+source_record = load_test_files(source_path)
+
+
 # Test setup_directories()
 def test_setup_directories(setup_working_directory):
     local = setup_working_directory
@@ -13,6 +42,15 @@ def test_setup_directories(setup_working_directory):
     assert os.path.exists("logs")
     assert os.path.exists(os.path.join("output","xml"))
     assert os.path.exists(os.path.join("output","mrc","split","many"))
+
+# get_callable_files
+def test_get_callable_files():
+    files = get_callable_files(input_path)
+    expected = [path.join(input_path, "example_01_korean_rare.xml"), 
+                path.join(input_path, "example_02_chinese_rare.xml"), 
+                path.join(input_path, "example_03_photo_child.xml"), 
+                path.join(input_path, "example_04_photo_child.xml")]
+    assert files == expected
 
 # Test split_marc_records()
 def test_split_marc_records_dictionary_keys_generated(temp_marc_file):
