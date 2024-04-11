@@ -7,13 +7,9 @@ from datetime import datetime
 from src.logger_config import *
 
 
-"""
-Takes an API call.
-Output is EXIT if the number is below API_CALL_LIMIT else True.
-"""
-
 
 def api_volume_check(api_return):
+    """Returns True if remaining API calls above API_CALL_LIMIT"""
     remaining_calls = int(api_return.headers["X-Exl-Api-Remaining"])
     limit = API_CALL_LIMIT
     if remaining_calls < limit:
@@ -32,7 +28,12 @@ def api_volume_check(api_return):
 
 
 def validate_mmsid(mms_id):
-    if mms_id.startswith("99") and mms_id.endswith("7636") and len(mms_id) > 6:
+    """Validate MMS ID based on SLV configuration"""
+    if mms_id.startswith("9999") and mms_id.endswith("76367636"):
+        print(f"Probable invalid MMS Id requires review: {mms_id}. Validity check returning False.")
+        logger.warning(f"Probable invalid MMS Id: {mms_id}")
+        return False
+    elif mms_id.startswith("99") and mms_id.endswith("7636") and len(mms_id) > 6:
         return True
     else:
         return False
@@ -118,32 +119,31 @@ def get_bibs(part, mms_ids):
     return api_call
 
 
-"""
-Input is API call.
-Output is pretty JSON.
-"""
-
 
 def get_json_string(api_call):
+    """Gets converts request to JSON"""
     data = api_call.json()
     json_str = json.dumps(data, indent=4)
     return json_str
 
 
-"""
-Input is output folder, request part, and data input.
-Output is a file.
-"""
 
+def output_json_files(dir, part, input):
+    """Writes returned json string to files.
+    Args:
+        dir (path) - output location.
+        part (str | int) - added to filename to distinguish from other filenames.
+        input (str) - json string.
 
-def output_bib_files(dir, part, input):
+    Output:
+        file with name format {YYYYMMDDHM00}_records_batch_{part}.json
+    """
     today = datetime.now().strftime("%Y%m%d%H%M00")
     filename = os.path.join(dir, f"{today}_records_batch_{part}.json")
     try:
-        file = open(filename, "w", encoding='utf-8', errors='backslashreplace')
-        file.write(input)
+        with open(filename, "w", encoding='utf-8', errors='backslashreplace') as file:
+            file.write(input)
         logger.debug(f"Output API response to file {filename}")
-        file.close()
     except Exception as e:
         logger.debug(f"Error occured: {e}")
 
@@ -159,7 +159,6 @@ Logger calls are used throughout the program and will record hidden info includi
 """
 logger = logging.getLogger(__name__)
 debug_log_config("log_file")
-logger.info("==API Script Logging==")
 
 
 ## Loads environment variables

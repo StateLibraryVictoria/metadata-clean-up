@@ -23,7 +23,7 @@ def test_chunk_identifiers(mms_ids, chunked):
     assert chunked_identifiers == chunked
 
 # Checks if the MMS Id validator is behaving as expected. Can only test for obvious issues such as not long enough and not starting and ending with the right characters.""
-@pytest.mark.parametrize("id, expected", [("9938164143607636", True), ("997636", False), ("not an mms id", False), ("99alsonot", False)])
+@pytest.mark.parametrize("id, expected", [("9938164143607636", True), ("997636", False), ("not an mms id", False), ("99alsonot", False), ("999912376367636", False), ("999912347636", True)])
 def test_validate_mmsid(id, expected):
     assert validate_mmsid(id) == expected
 
@@ -32,13 +32,13 @@ def test_check_api_key():
     assert check_api_key() == True
 
 # Checks that the json files are created as expected.
-def test_output_bib_files(tmp_path):
+def test_output_json_files(tmp_path):
     location = tmp_path / "json"
     location.mkdir()
     part = '0'
     input = "some text"
     today = datetime.now().strftime('%Y%m%d%H%M00')
-    output_bib_files(location, part, input)
+    output_json_files(location, part, input)
     filename = f"{today}_records_batch_{part}.json"
     file = location / filename
     assert file.read_text() == "some text"
