@@ -18,12 +18,13 @@ def setup_directories():
     processed_path = os.path.join("output", "record_processing","processed")
     exception_path = os.path.join("output", "record_processing","exceptions")
     output_path_mrc = os.path.join("output", "mrc","split")
+    output_path_mrc_merge = os.path.join("output", "mrc","merge")
     input_path_mrc = os.path.join(input_path, "mrc")
     output_path_xml = os.path.join("output","xml")
     parent_records_path = os.path.join(output_path_mrc,"parent")
     many_records_path = os.path.join(output_path_mrc,"many")
     paths = [log_path, input_path, processed_path, exception_path, output_path_mrc, 
-             input_path_mrc, output_path_xml, parent_records_path, many_records_path]
+             input_path_mrc, output_path_xml, parent_records_path, many_records_path, output_path_mrc_merge]
 
     for path in paths:
         if not os.path.exists(path):
