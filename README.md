@@ -52,6 +52,12 @@ This requires two environment variables:
 
 #### process_marc_file.py
 
+**Steps**
+- Start pipenv shell.
+- Place a single MARC (.mrc) file in the `/input/load/mrc/` directory.
+- Run `py process_marc_file.py` or `python process_marc_file.py`
+- Enter output filename when prompted.
+
 Takes a MARC file as input. Splits the records into parent and many record directories, then calls the API to retrieve missing identifiers and writes the records to the parent directory.
 Iterates through the many records and performs the following:
 - replaces 1xx, 260/264, 6xx, 7xx, 8xx from parent record.
