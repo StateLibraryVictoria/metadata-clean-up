@@ -33,66 +33,6 @@ photo_example_02 = input_files[3]
 source_path = os.path.join(data_path, "source", "source_record.xml")
 source_record = load_test_files(source_path)
 
-# get_marc_tag
-@pytest.mark.parametrize("input_file, expected", 
-                         [
-                             (input_files[0], "Gosŭt'ŭ ch'aildŭ ="), 
-                             (input_files[1], "Qing chun wu qi tu xing ="), 
-                             (input_files[2], "Swan Hill Pioneer Settlement"), 
-                             (input_files[3], "Ken Done's house")
-                             ])
-def test_get_marc_tag_245a(input_file, expected):
-    record = load_pymarc_record(input_file)
-    title = get_marc_tag(record, "245", "a")
-    assert title == expected
-
-@pytest.mark.parametrize("input_file, expected", 
-                         [
-                             (input_files[0], "223 pages :"), 
-                             (input_files[1], "250 pages ;"), 
-                             (input_files[2], "1 digital file"), 
-                             (input_files[3], "1 digital file")
-                             ])
-def test_get_marc_tag_300a(input_file, expected):
-    record = load_pymarc_record(input_file)
-    title = get_marc_tag(record, "300", "a")
-    assert title == expected
-
-# load_pymarc_record
-@pytest.mark.parametrize("input_file, expected", 
-                          [
-                             (input_files[0], "Gosŭt'ŭ ch'aildŭ ="), 
-                             (input_files[1], "Qing chun wu qi tu xing ="), 
-                             (input_files[2], "Swan Hill Pioneer Settlement"), 
-                             (input_files[3], "Ken Done's house")
-                             ])
-def test_load_pymarc_record(input_file, expected):
-    record = load_pymarc_record(input_file)
-    title = record.title
-    assert title.startswith(expected)
-
-# get_callable_files
-def test_get_callable_files():
-    files = get_callable_files(input_path)
-    expected = [path.join(input_path, "example_01_korean_rare.xml"), 
-                path.join(input_path, "example_02_chinese_rare.xml"), 
-                path.join(input_path, "example_03_photo_child.xml"), 
-                path.join(input_path, "example_04_photo_child.xml")]
-    assert files == expected
-
-# get field count
-@pytest.mark.parametrize("input_file, expected", 
-                          [
-                             (input_files[0], 2), 
-                             (input_files[1], 1), 
-                             (input_files[2], 1), 
-                             (input_files[3], 2)
-                             ])
-def test_get_field_count(input_file, expected):
-    record = load_pymarc_record(input_file)
-    field_count = get_field_count(record, "655")
-    assert field_count == expected
-
 
 # replace field when string supplied and is whole value
 @pytest.mark.parametrize("input_file, source_record, string_field, expected", 
@@ -103,9 +43,9 @@ def test_get_field_count(input_file, expected):
                              (input_files[3], source_path, "650", "Architecture, Domestic Victoria Fitzroy.")
                              ])    
 def test_replace_field_whole_string(input_file, source_record, string_field, expected):
-    record = load_pymarc_record(input_file)
-    source = load_pymarc_record(source_record)
-    result = replace_field(record, source, string_field)
+    record = pymarc.parse_xml_to_array(input_file)
+    source = pymarc.parse_xml_to_array(source_record)
+    result = replace_field(record[0], source[0], string_field)
     final = result.get_fields(string_field)[0].value() if len(result.get_fields(string_field)) > 0 else ""
     assert final == expected
 
@@ -149,16 +89,16 @@ field_650 = Field(
                              (input_files[3], source_path, field_650, "Architecture, Domestic Victoria Fitzroy.")
                              ])    
 def test_replace_field_field_object(input_file, source_record, field_object, expected):
-    record = load_pymarc_record(input_file)
-    source = load_pymarc_record(source_record)
-    result = replace_field(record, source, field_object)
+    record = pymarc.parse_xml_to_array(input_file)
+    source = pymarc.parse_xml_to_array(source_record)
+    result = replace_field(record[0], source[0], field_object)
     final = result.get_fields(field_object.tag)[0].value() if len(result.get_fields(field_object.tag)) > 0 else ""
     assert final == expected
 
 
 def test_fix_655_gmgpc():
-    record = load_pymarc_record(photo_example_01)
-    fixed_record = fix_655_gmgpc(record)
+    record = pymarc.parse_xml_to_array(photo_example_01)
+    fixed_record = fix_655_gmgpc(record[0])
     assert fixed_record.get_fields('655')[0].value() == "Gelatin silver prints gmgpc"
 
 
@@ -170,8 +110,8 @@ def test_fix_655_gmgpc():
                              (input_files[3], False)
                              ])
 def test_is_parent(input_file, expected):
-    record = load_pymarc_record(input_file)
-    assert is_parent(record) == expected
+    record = pymarc.parse_xml_to_array(input_file)
+    assert is_parent(record[0]) == expected
 
 
 

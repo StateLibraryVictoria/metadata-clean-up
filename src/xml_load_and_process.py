@@ -8,70 +8,10 @@ from src.logger_config import *
 
 logger = logging.getLogger(__name__)
 debug_log_config("log_file")
-logger.info("==XML load and process log==")
-
-def get_marc_tag(pymarc_record, field, subfield):
-    """Retrieve value in specified field.
-
-    Args:
-        pymarc_record: Pymarc Record Object.
-        field: str - MARC tag, eg '001', '500', etc.
-        subfield: str - Subfield tag eg. 'a', '4'.
-    """
-    try:
-        value = pymarc_record[field][subfield]
-        return value
-    except:
-        logger.debug(f"Error getting field {field} ${subfield}")
-        return None
-
-
-
-
-def load_pymarc_record(filename):
-    """Load XML record as pymarc record object.
-    
-    If 1 record in the array, returns record object. 
-    Otherwise prints warning and returns record array.
-    """
-    record = pymarc.parse_xml_to_array(filename)
-    if len(record) == 1:
-        return record[0]
-    else:
-        print("Multi-record file identified.")
-        return record
-
-
-
-
-def get_callable_files(dir_name):
-    """Get a list of filepaths in target directory"""
-    output_list = []
-    try:
-        for root, dirs, files in os.walk(dir_name):
-            files.sort()
-            output_list = [path.join(dir_name, file) for file in files]
-        return output_list
-    except Exception as e:
-        logger.error(f"Error getting callable files: {e}")
-
-
-def get_field_count(record, field):
-    """Counts number of fields in record
-
-    Args:
-        record (pymarc record object): 
-        field (str): the desired field expressed as a string.
-    """
-    try:
-        fields = record.get_fields(field)
-    except Exception as e:
-        logger.error(f"Error getting field count: {e}")
-    return len(fields)
 
 
 def get_fields_from_source(source_record, field):
-    """Checks for field in source record and returns list of fields.
+    """Checks for field in source record and returns list of fields with 1xx handling.
 
     Args:
         source_record (pymarc Record object): record containing data with target field.
@@ -91,7 +31,7 @@ def get_fields_from_source(source_record, field):
     else:
         match_fields = source_record.get_fields(tag)
     if len(match_fields) == 0:
-        amount = f"no {tag} fields" if get_field_count(source_record, tag) < 1 else f"too many {tag} fields"
+        amount = f"no {tag} fields" if len(source_record.get_fields(tag)) < 1 else f"too many {tag} fields"
         logger.warning(f"Source record contains {amount}. "
                         + "Cancelling operation.")
         return None
