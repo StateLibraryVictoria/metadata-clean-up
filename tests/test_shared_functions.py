@@ -48,8 +48,8 @@ def test_get_callable_files():
     files = get_callable_files(input_path)
     expected = [path.join(input_path, "example_01_korean_rare.xml"), 
                 path.join(input_path, "example_02_chinese_rare.xml"), 
-                path.join(input_path, "example_03_photo_child.xml"), 
-                path.join(input_path, "example_04_photo_child.xml")]
+                path.join(input_path, "example_03_photo_many.xml"), 
+                path.join(input_path, "example_04_photo_many.xml")]
     assert files == expected
 
 # Test split_marc_records()
