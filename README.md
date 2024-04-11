@@ -4,6 +4,10 @@ A Code Club project to create some tools to help clean-up metadata in the Librar
 
 # Getting started
 
+## Parent records and Many records
+
+To support access to digitised material, MARC records have been generated for digital objects based on their original catalogue records. The original records are referred to as `parent records` while their linked derivatives are referred to as `many records`. These records have specialised local fields in the `950` and `956` which support metadata flows. This process has been developed to simplify cleanup of the `many records`, so many of the methods are designed to work with the relationships between the metadata in these records.
+
 ## Installation and setup
 
 Note that for the instructions below, the command `python -m` may be required at the start of each command to add modules to path.
@@ -19,18 +23,21 @@ Note that for the instructions below, the command `python -m` may be required at
 
 ## Dependencies
 
-        Use this space to track additional libraries relied on in the code.
+Use this space to track additional libraries relied on in the code.
 
 ### Whole project
-- [logging](https://docs.python.org/3/library/logging.html)
-- [os](https://docs.python.org/3/library/os.html)
-- [pipenv](https://pipenv.pypa.io/en/latest/)
-- [pytest](https://docs.pytest.org/en/8.0.x/)
 - [json](https://docs.python.org/3/library/json.html)
-- [requests](https://requests.readthedocs.io/en/latest/)
-- [sys](https://docs.python.org/3/library/sys.html)
-- [subprocess](https://docs.python.org/3/library/subprocess.html)
+- [logging](https://docs.python.org/3/library/logging.html)
+- [openpyxl](https://openpyxl.readthedocs.io/en/stable/)
+- [os](https://docs.python.org/3/library/os.html)
+- [pandas](https://pandas.pydata.org/)
+- [pipenv](https://pipenv.pypa.io/en/latest/)
 - [pymarc](https://pymarc.readthedocs.io/en/latest/)
+- [pytest](https://docs.pytest.org/en/8.0.x/)
+- [requests](https://requests.readthedocs.io/en/latest/)
+- [subprocess](https://docs.python.org/3/library/subprocess.html)
+- [sys](https://docs.python.org/3/library/sys.html)
+
 
 ### Non-Python dependencies
 - [MarcEdit](https://marcedit.reeset.net/) - Experimental - Functions in transform_marc_file.py can be called to run Validation and MarcBreaker functionality from the command line via the subprocess module. MarcEdit provides a [command-line tool](https://marcedit.reeset.net/cmarcedit-exe-using-the-command-line) as part of its functionality. Currently capable of validating or breaking mrc files. Applying MarcEdit task files has not been succesfully implemented in this repository.
@@ -41,7 +48,7 @@ This requires two environment variables:
 
 ## Scripts
 
-### Runnable scripts
+### Current scripts
 
 #### process_marc_file.py
 
@@ -50,6 +57,7 @@ Iterates through the many records and performs the following:
 - replaces 1xx, 260/264, 6xx, 7xx, 8xx from parent record.
 - fixes indicators.
 - fixes 655 trailing punctuation on $2 gmgpc subject headings.
+- Generates a final merged MARC record in an output director with a MarcEdit validation report and MARC Text File (.mrk).
 Requests user input for output filename and creates a MarcEdit validation report in the same direcotry.
 
 
@@ -73,8 +81,6 @@ These functions are not split in optimal ways so will need to be re-worked into 
 #### shared_functions.py
 
 Functions for splitting Marc records into `output/mrc/split/parent` and `output/mrc/split/many` directories for further processing and retrieving missing parent records not in the directory.
-
-**Requires unit test development**
 
 #### Api_call.py  
 
@@ -101,39 +107,27 @@ Functions targeting data in the local field 950$p that represent relationship li
 
 Has unit tests.
 
+#### transform_marc_file.py
+
+Functions that call `cmarcedit.exe` to perform validation and MARCBreaker tasks.
+
 #### logger_config.py
 
 Functions for configuring a logger. Used for testing individual scripts as part of development. When running all scripts the logfile writes to `logs/log_api_call.log`.
 
-## Deliverables
+## Pyunit tests
 
-1. Alma API call: Takes a list of MMS Ids and returns JSON records containing up to 100 MARCXML records.
-2. XML extraction: Takes the JSON response and exports each XML record to its own file.
-3. Load XML: Loads MARCXML to Pymarc record objects.
-4. Transformations:
-    - Get parent MMS ID: Gets valid MMS Ids from the 950 $p field. Identifiers can be written to file or used as a lsit to call the API.
-    - Fix 655 gmgpc genre term headings - remove trailing period.
-    - Copy specified fields from parent record to child.
-5. Output files as .mrc files.
-- Unit tests (ongoing)
+The scrips include a number of pyunit tests and fixtures to improve future development of tests. Of interest:
 
+### Fixtures
 
-# Early plan 
+Fixtures are specified in `tests/conftest.py` to be used across different tests. Fixtures include:
 
-## Pseudocode  
-Updated pseudocode migrated from kaggle notebook
+- `temp_marc_file` - A path to a MARC file with multiple records.
+- `setup_working_directory` - Creates a mirror directory in a temporary folder.
+- `single_record` - A single Pymarc Record object.
+- `field_replace_record` - Allows for a list of Pymarc Field objects to be passed to the `single_record` object for testing expected functionality.
+    - Requires `@pytest.mark.parametrize("set_field_list", list_of_fields, indirect=["set_field_list"])` to configure the tests where `list_of_fields` is a list of one or more field objects submitted as a list.
+- `get_validation_report` - An example MarcEdit validation report with errors to support development of parsing these reports in future.
+- `missing_parents` - A copy of parent records for the records in the `temp_marc_file` fixture. In a live run these would be retrieved via the API.
 
-        # Metadata cleanup project  
-        # Get child item  
-        # Find parent item of child  
-            # Get parent item of child  
-        # Compare field 264  
-            # If match do nothing  
-            # If blank in parent do nothing  
-            # Else change child to parent value  
-                # Alternative: suggest update to human user and 
-                               user inputs confirmation
-
-## Alma API
-
-Alma provides documentation of the REST APIs on their website: [link](https://developers.exlibrisgroup.com/alma/apis/). They also provide an [API Console](https://developers.exlibrisgroup.com/console/) for testing. Based on initial investigations in the *Bibliographic Records and Invventory* section it appears that responses can be returned in either XML or JSON. XML appears to contain complete bibliographic records, while JSON contains only some fields.
