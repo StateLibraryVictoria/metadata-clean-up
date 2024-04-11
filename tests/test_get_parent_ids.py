@@ -1,6 +1,6 @@
 import pytest
 from src.get_parent_ids import *
-from src.xml_load_and_process import get_callable_files, load_pymarc_record
+from src.shared_functions import get_callable_files
 
 id_list = "9938036653607636,9938036613607636,9938164143607636".split(",")
 
@@ -26,8 +26,8 @@ def test_format_ids_for_api():
                              (input_files[3], "9922700093607636")
                              ])
 def test_get_parent_id(input_file, expected):
-    record = load_pymarc_record(input_file)
-    id = get_parent_id(record)
+    record = pymarc.parse_xml_to_array(input_file)
+    id = get_parent_id(record[0])
     assert id == expected
 
 

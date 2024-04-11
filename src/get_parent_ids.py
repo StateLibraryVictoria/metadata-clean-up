@@ -3,7 +3,7 @@ from copy import deepcopy
 import pymarc
 from src.logger_config import *
 from src.api_call import validate_mmsid
-from src.xml_load_and_process import *
+from src.shared_functions import get_callable_files
 
 debug_log_config("get-parent")
 logger = logging.getLogger()
@@ -12,6 +12,11 @@ logger = logging.getLogger()
 def big_bang_replace(many_record, parent_record):
     """Replaces fields based on the big bang cleanup project.
     Fields 1xx, 260/264, 6xx, 7xx, 8xx are copied from parent to many record."""
+    if not isinstance(many_record, pymarc.record.Record):
+        raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
+    if not isinstance(parent_record, pymarc.record.Record):
+        logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+        return many_record
     fix_record = deepcopy(many_record)
     onexx = ['100', '110', '111', '130']
     pub_year = ['260', '264']
@@ -69,19 +74,20 @@ def big_bang_replace(many_record, parent_record):
 def get_parent_id(pymarc_record):
     """Get parent mms id from 950 $p
         Input: record
-        Processing: Passes 950 and p to get_marc_tag.
+        Processing: 
+            Checks if 950$p in record.
             Checks that value is a valid id.
         Output: Value or "Not present"
     """
-    id = get_marc_tag(pymarc_record, "950", "p")
-    if id == 0:
+    try:
+        id = pymarc_record['950']['p']
+    except KeyError:
         return None
-    if id:
-        if validate_mmsid(id):
-            return id
-        else:
-            logger.debug(f"Invalid MMS id: {id}")
-            return None
+    if validate_mmsid(id):
+        return id
+    else:
+        logger.debug(f"Invalid MMS id: {id}")
+        return None
 
 def iterate_get_parents(filepath_list): #also get child MMS Id and append as a tuple.
     """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
@@ -113,12 +119,13 @@ def iterate_get_parents(filepath_list): #also get child MMS Id and append as a t
         try:
             parent_id_dict = {}
             for file in filepath_list:
-                record = load_pymarc_record(file)
-                id = record['001'].value()
-                parent_id = get_parent_id(record)
-                if parent_id is not None:
-                    parent_id_dict.update({index : [id, parent_id]})
-                    index += 1
+                records = pymarc.parse_xml_to_array(file) 
+                for record in records:
+                    id = record['001'].value()
+                    parent_id = get_parent_id(record)
+                    if parent_id is not None:
+                        parent_id_dict.update({index : [id, parent_id]})
+                        index += 1
         except Exception as e:
             logger.error(f"Error iterating parent ids: {e} " 
                     +" 950 $p may be invalid or not present in some records.")
