@@ -187,11 +187,13 @@ def test_set_245_ind1_to_1(field_replace_record):
 
 @pytest.mark.parametrize("input, expected",
                         [
-                            ("the title", 4), 
+                            ("The title", 4), 
                             ("[the title",5),
-                            ("l'title", 2), 
+                            ("L'title", 2), 
                             ("xyz", 0), 
-                            ('123', 0)
+                            ('123', 0),
+                            ("青春無期徒刑", 0),
+                            ("översättning", 0)
                             ]
                             )
 def test_get_nonfiling_characters(input, expected):
