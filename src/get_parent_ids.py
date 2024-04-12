@@ -89,9 +89,11 @@ def get_parent_id(pymarc_record):
         logger.debug(f"Invalid MMS id: {id}")
         return None
 
-def iterate_get_parents(filepath_list): #also get child MMS Id and append as a tuple.
+def iterate_get_parents(filepath_list, parent_only=False): #also get child MMS Id and append as a tuple.
     """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
-        Input: .mrc or .xml filepath list from get_callable_files.
+        Args: 
+            filepath_list (list) : .mrc or .xml filepath list from get_callable_files.
+            parent_only (bool) : Default to False. Set to True to return only parent ids as list.
 
         Processing: Loads records with Pymarc. 
             Gets 001
@@ -99,20 +101,38 @@ def iterate_get_parents(filepath_list): #also get child MMS Id and append as a t
             Adds values to a dictionary with MMS Id of record as key.
         Output: Dictionary with a index: [id, parent_id]
     """
+    
+    if filepath_list == None or len(filepath_list) == 0:
+        logger.info("Iterate get parents failed as filepath list is empty.")
+        return None
     index = 0
     filepath_list.sort()
+    records_without_parents = False
     if filepath_list[0].endswith(".mrc"):
         try:
+            parent_id_list = []
             parent_id_dict = {}
             for file in filepath_list:
                 with open(file, 'rb') as fh:
                     reader = pymarc.MARCReader(fh)
                     for record in reader:
-                        id = record['001'].value()
-                        parent_id = get_parent_id(record)
-                        if parent_id is not None:
-                            parent_id_dict.update({index:[id, parent_id]})
-                            index += 1
+                        try:
+                            if record['956']['b'] == "MANY":
+                                id = record['001'].value()
+                                parent_id = get_parent_id(record)
+                                logger.debug(f"Record id: {id}, parent_id {parent_id}")
+                                if parent_id is not None:
+                                    parent_id_list.append(parent_id)
+                                    parent_id_dict.update({index:[id, parent_id]})
+                                    index += 1
+                                else: # checks record is not a Parent and if so 
+                                    logger.info(f"Missing parent id: Many record {id} did not contain Parent id in 950$p")
+                                    records_without_parents=True
+                            else:
+                                logger.info(f"Not MANY record: Record {record['001'].value()} is not a MANY record.")
+                        except KeyError:
+                            logger.info(f"No 956$b: Record {id} did not contain 956$b")
+                            records_without_parents=True
         except Exception as e:
             logger.error(f"Error reading marc from iterating parent ids: {e}")
     elif filepath_list[0].endswith(".xml"):
@@ -132,7 +152,12 @@ def iterate_get_parents(filepath_list): #also get child MMS Id and append as a t
     else:
         print("No valid files supplied. Files must be .mrc or .xml.")
         logger.error("No valid files supplied. Files must be .mrc or .xml.")
-    return parent_id_dict
+    if (records_without_parents):
+        print("Processing completed with exceptions. Some files did not contain parents. See logfile for a list of MMS Ids.")
+    if (parent_only):
+        return parent_id_list
+    else:
+        return parent_id_dict
 
 
 """
@@ -161,8 +186,8 @@ Output: File with mms ids separated by commas.
 def write_ids_to_list(id_string, output_directory, filename):
     try:
         output_location = path.join(output_directory, filename)
-        output_file = open(output_location, "w", encoding="utf-8")
-        output_file.write(id_string)
+        with open(output_location, "w", encoding="utf-8") as output_file:
+            output_file.write(id_string)
     except Exception as e:
         logger.error(f"Error generating mms id string from list: {e}")
 
