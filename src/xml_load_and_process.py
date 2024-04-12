@@ -205,18 +205,19 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     return None
 
 def get_nonfiling_characters(string):
+    # \W catches anything that returns False for str.isalnum()
+    # Unicode characters in other scripts inherit the Alphabetic property
+    # and return True if Alphabetic.
     nonfiling = r"^(\W?)(the |an |a |le |l')?\s*"
-    query = re.search(nonfiling, string)
+    query = re.search(nonfiling, string.lower())
     return query.group()
 
 def fix_245_indicators(record):
     """Checks aspects of the 245 in a record and updates indicators"""
     wr = deepcopy(record)
-    # First indicator - 0 - No added entry, 1 - Added entry (no 1xx)
     title = wr.title
-    title = title.lower()
 
-    # fix first indicator
+    # fix first indicator - 0 - No added entry, 1 - Added entry (no 1xx)
     if len(wr.get_fields('100', '110', '111', '130')) == 0:
         first_indicator = '1'
     else:
