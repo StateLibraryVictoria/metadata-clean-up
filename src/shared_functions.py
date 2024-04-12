@@ -9,11 +9,13 @@ from src.transform_marc_file import *
 
 
 logger = logging.getLogger(__name__)
-debug_log_config("log_file")
+debug_log_config("file")
 logger.info("==Shared function script logging==")
 
 def setup_directories():
+    """Initialises directories"""
     log_path = os.path.join("logs")
+    json_path = os.path.join("json")
     input_path = os.path.join("input","load")
     processed_path = os.path.join("output", "record_processing","processed")
     exception_path = os.path.join("output", "record_processing","exceptions")
@@ -24,7 +26,7 @@ def setup_directories():
     parent_records_path = os.path.join(output_path_mrc,"parent")
     many_records_path = os.path.join(output_path_mrc,"many")
     paths = [log_path, input_path, processed_path, exception_path, output_path_mrc, 
-             input_path_mrc, output_path_xml, parent_records_path, many_records_path, output_path_mrc_merge]
+             input_path_mrc, output_path_xml, parent_records_path, many_records_path, output_path_mrc_merge, json_path]
 
     for path in paths:
         if not os.path.exists(path):
@@ -32,11 +34,38 @@ def setup_directories():
             os.makedirs(path)
 
     # create logfile location
-    open(os.path.join(log_path, "log_log_file.log"),'a')
+    open(os.path.join(log_path, "log_file.log"),'a')
+
+def clear_temporary_files():
+    """Removes temporary files from specific directories once complete."""
+    print("Cleaning temporary working directories...")
+    output_path_mrc = os.path.join("output", "mrc","split")
+    output_path_mrc_merge = os.path.join("output", "mrc","merge")
+    json_path = os.path.join("json")
+    paths = [json_path, output_path_mrc, output_path_mrc_merge]
+
+    for local_path in paths:
+        if os.path.exists(local_path):
+            count = 0
+            for root, dir, files in os.walk(local_path):
+                #remove files
+                file_list = [os.path.join(root, file) for file in files]
+                for item in file_list:
+                    try:
+                        os.remove(item)
+                        count += 1
+                        logger.info(f"Removed {item}")
+                    except Exception as e:
+                        print(f"Error removing files: {e}")
+        print(f"Removed {count} files from {local_path}")
+        logger.info(f"Removed {count} files from {local_path}")
+
+
 
 def get_callable_files(dir_name):
     """Get a list of filepaths in target directory"""
     output_list = []
+    logger.info(f"Searching directory {dir_name} for callable files.")
     try:
         for root, dirs, files in os.walk(dir_name):
             files.sort()
@@ -79,8 +108,8 @@ def split_marc_records(input_filename):
                     except KeyError:
                         logger.info("950 p not present in record.")
                 output_file = os.path.join("output","mrc","split","many",f"record_{id}.mrc")
-            f = open(output_file, 'wb')
-            f.write(record.as_marc())
+            with open(output_file, 'wb') as f:
+                f.write(record.as_marc())
     return identifiers
 
 def get_missing_records(existing_records, request_ids, output_directory):
@@ -200,7 +229,7 @@ def get_list_error_ids(validator_report):
     logger.info(f"Number of records with errors identified: {len(identifiers)}")
     return identifiers
 
-def output_file_with_validation(record_source_path,output_directory, filename=None, merged=False):
+def output_file_with_validation(record_source_path, output_directory, filename=None, merged=False):
     """Creates merged MARC file in output directory with MarcEdit validation report and MARC Text File (.mrk).
 
         Args:
@@ -219,11 +248,10 @@ def output_file_with_validation(record_source_path,output_directory, filename=No
 
     """
     if filename is None:
-        print("Enter filename for merged MARC file (include .mrc extension).")
+        print("Enter filename for merged MARC file.")
         merge_filename = input()
     else:
         merge_filename = filename
-        print(filename)
     if not merge_filename.endswith(".mrc"):
         merge_filename, ext = os.path.splitext(merge_filename)
         merge_filename = merge_filename + ".mrc"
@@ -238,12 +266,12 @@ def output_file_with_validation(record_source_path,output_directory, filename=No
             print(f"Merge failed: {e}")
             logger.info(f"Merge failed: {e}")
     try: 
-        break_marc_record(merge_output, merge_output.replace(".mrc",".mrk"))
+        break_marc_record(record_source_path, merge_output.replace(".mrc",".mrk"))
         print("MARK Text file (.mrk) created.")
     except Exception as e:
         print(f"Generation of .mrk file failed: {e}")
     try:
         validation_filename = merge_output.replace(".mrc", "_validation.txt")
-        validate_mrc_record(merge_output, validation_filename)
+        validate_mrc_record(record_source_path, validation_filename)
     except Exception as e:
         print(f"Validation of merged records faild: {e}")
