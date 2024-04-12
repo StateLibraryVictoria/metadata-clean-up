@@ -158,7 +158,7 @@ Every time the script is run it will append log to the same file.
 Logger calls are used throughout the program and will record hidden info including the http request.
 """
 logger = logging.getLogger(__name__)
-debug_log_config("log_file")
+debug_log_config("file")
 
 
 ## Loads environment variables
