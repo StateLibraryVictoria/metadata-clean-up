@@ -4,10 +4,24 @@ import pymarc
 from src.logger_config import *
 from src.api_call import validate_mmsid
 from src.shared_functions import get_callable_files
+from src.xml_load_and_process import *
 
 debug_log_config("get-parent")
 logger = logging.getLogger()
 
+
+def many_record_cleanup(many_record, parent_record):
+    """Runs all current cleanup actions on many record."""
+    if not isinstance(many_record, pymarc.record.Record):
+        raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
+    if not isinstance(parent_record, pymarc.record.Record):
+        logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+        return many_record
+    fix_record = deepcopy(many_record)
+    fix_record = big_bang_replace(fix_record, parent_record)
+    fix_record = fix_245_indicators(fix_record)
+    fix_record = fix_655_gmgpc(fix_record)
+    return fix_record
 
 def big_bang_replace(many_record, parent_record):
     """Replaces fields based on the big bang cleanup project.
@@ -160,14 +174,15 @@ def iterate_get_parents(filepath_list, parent_only=False): #also get child MMS I
         return parent_id_dict
 
 
-"""
-Input: list of ids.
-Processing: Concatinates them to csv
-Output: String
-"""
+
 
 
 def format_ids_for_api(id_list):
+    """
+    Input: list of ids.
+    Processing: Concatinates them to csv
+    Output: String
+    """
     try:
         string = ",".join(id_list)
         return string
@@ -176,14 +191,15 @@ def format_ids_for_api(id_list):
 
 
 
-"""
-Input: List of MMS Ids, output directory, filename
-Processing: Writes parent mms ids to list callable by the API function.
-Output: File with mms ids separated by commas.
-"""
+
 
 
 def write_ids_to_list(id_string, output_directory, filename):
+    """
+    Input: List of MMS Ids, output directory, filename
+    Processing: Writes parent mms ids to list callable by the API function.
+    Output: File with mms ids separated by commas.
+    """
     try:
         output_location = path.join(output_directory, filename)
         with open(output_location, "w", encoding="utf-8") as output_file:
