@@ -248,3 +248,20 @@ def test_fix_773_ind1(single_record):
     record.add_ordered_field(bad_773_field)
     wr = fix_773_ind1(record)
     assert wr['773'].indicator1 == "0"
+
+@pytest.mark.parametrize("input, expected",
+                        [
+                            ("[between 1874 and 1876]", "q18741876"), 
+                            ("[between 1830? and 1839]","q18301839"),
+                            ("1910.", "s1910####"),
+                            ("c. 1910", "s1910####"),
+                            ("1910-2012?", "i19102012"),
+                            ("circa 1910-2012","i19102012"),
+                            ("1970/1974", "q19701974"),
+                            ("about 1875", "s1875####"),
+                            ("about 1923 to 1924", "i19231924")
+                            ]
+                            )
+def test_date_to_008(input, expected):
+    date = date_to_008(input)
+    assert date == expected
