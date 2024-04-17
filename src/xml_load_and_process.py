@@ -4,6 +4,7 @@ import re
 import logging
 from copy import deepcopy
 import re
+import string
 from src.logger_config import *
 
 logger = logging.getLogger(__name__)
@@ -294,3 +295,44 @@ def fix_indicators(record):
     wr = fix_773_ind1(wr)
     wr = fix_830_ind2(wr)
     return wr
+
+def date_to_008(date):
+    circa = r"^c\.?\s+|(?<=\W)c\.?\s|circa\s+|(?<=\W)ci\.?\s+"
+    minus_circa = re.sub(circa,"", date)
+    # if no letters in string
+    stripped = re.sub(r"\W","",date)
+    print(stripped)
+    if stripped.isnumeric():
+        print("is numeric")
+        if len(stripped) == 4: # basic single date
+            outcome = "s" + stripped + "####"
+        elif len(stripped) == 8 and "-" in date:
+            outcome = "i" + stripped
+        elif len(stripped) == 8 and "/" in date:
+            outcome = "q" + stripped
+    elif "between" in date: # questionable date
+        between = r"between (\d\d\d\d)\?? and (\d\d\d\d)\??"
+        found = re.findall(between, date)
+        start, end = found[0]
+        outcome = "q" + start + end
+    elif date.startswith('about') and len(re.sub("\D","",stripped)) <=8:
+        if len(re.sub("\D","",date)) == 4:
+            outcome = "s" + re.sub("\D","",date) + "####" # check this
+        elif len(re.sub("\D","",date)) == 8:
+            outcome = "i" + re.sub("\D","",date)
+    elif len(re.sub("\W","", (minus_circa))) == 4:
+        outcome = "s" + re.sub("\D","",date) + "####"
+    elif len(re.sub("\W","", (minus_circa))) == 8:
+        outcome = "i" + re.sub("\D","",date)
+    else:
+        print("Could not associate date with expected pattern. Please enter pattern:")
+        while (True):
+            print('Value: "' + date + '"')
+            outcome = input()
+            print("Data entered: " + outcome)
+            print("Continue? (y/n)")
+            continues = input()
+            if continues.lower().startswith('y'):
+                break
+
+    return outcome
