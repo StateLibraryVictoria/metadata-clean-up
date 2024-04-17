@@ -23,15 +23,28 @@ def many_record_cleanup(many_record, parent_record):
     fix_record = fix_655_gmgpc(fix_record)
     return fix_record
 
-def big_bang_replace(many_record, parent_record):
+
+def big_bang_replace(many_record, parent_record, replace=True):
     """Replaces fields based on the big bang cleanup project.
-    Fields 1xx, 260/264, 6xx, 7xx, 8xx are copied from parent to many record."""
-    if not isinstance(many_record, pymarc.record.Record):
-        raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
-    if not isinstance(parent_record, pymarc.record.Record):
-        logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
-        return many_record
-    fix_record = deepcopy(many_record)
+    Fields 1xx, 260/264, 6xx, 7xx, 8xx are copied from parent to many record.
+    
+    args:
+        many_record (pymarc Record object) : record to have the fields added to.
+        parent_record (pymarc Record object) : record to take the fields from.
+        replace (boolean) : set to allow for a new record to be created.
+    """
+    if replace:
+        if not isinstance(many_record, pymarc.record.Record):
+            raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
+        if not isinstance(parent_record, pymarc.record.Record):
+            logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+            return many_record
+        fix_record = deepcopy(many_record)
+    else:
+        if not isinstance(parent_record, pymarc.record.Record):
+            logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+            return None
+        fix_record = pymarc.record.Record()
     onexx = ['100', '110', '111', '130']
     pub_year = ['260', '264']
     subjects = ["600", "610", "611", "630", "648", "650", "651", "653", "654", "655",
