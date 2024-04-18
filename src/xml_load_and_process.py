@@ -175,6 +175,7 @@ def record_to_mrc(record, output_filename):
         out.write(record.as_marc())
     out.close()
 
+
 def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     """Returns matching subfield from a record matching either exact or with whitespace stripped.
 
@@ -186,13 +187,19 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     # check record is Record
     if not isinstance(record, pymarc.record.Record):
         raise Exception("Record must be a pymarc Record object.")
-    
+
     # get the matched accession numbers
     for item in record.get_fields(tag):
         if item[subfield] == query:
             return query
         elif item[subfield].replace(" ","") == query.replace(" ",""):
             return item[subfield]
+        # 037 case for ranged identifiers
+        elif tag == '037' and "-" in item[subfield]:
+            identifiers = enumerate_037(item[subfield])
+            for id in identifiers:
+                if id == query or id.replace(" ","") == query.replace(" ",""):
+                    return id
         else:
             continue
     
@@ -203,6 +210,7 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
         except Exception as e:
                 print(f"error adding log for failed query search {e}")
     return None
+
 
 def get_nonfiling_characters(string):
     # \W catches anything that returns False for str.isalnum()
