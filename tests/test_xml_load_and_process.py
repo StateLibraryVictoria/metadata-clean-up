@@ -1,7 +1,7 @@
 from os import path
 from copy import deepcopy
 import pytest
-from pymarc import Field, Subfield
+from pymarc import Field, Subfield, Record
 
 from src.xml_load_and_process import *
 
@@ -128,6 +128,53 @@ def test_subfield_is_in_record_whitespace(single_record):
     record = deepcopy(single_record)
     returned = subfield_is_in_record(record, 'CUASM213 / 7', '037', 'a')
     assert returned == "CUASM213/7"
+
+# test range case.
+test_037_range = Record(
+)
+h_field = Field(
+    tag = '037',
+    indicators = ['', ''],
+    subfields = [
+        Subfield(code='a', value='H2013.12/1-5')
+    ]
+    )
+
+rwp_field = Field(
+    tag = '037',
+    indicators = ['', ''],
+    subfields = [
+        Subfield(code='a', value="RWP/A19.13-15")
+    ]
+    )
+
+ms_field = Field(
+    tag = '037',
+    indicators = ['', ''],
+    subfields = [
+        Subfield(code='a', value='MS12345/1/PHO234-235')
+    ]
+)
+
+def test_subfield_is_in_record_range_hnum():
+    record = deepcopy(test_037_range)
+    record.add_field(h_field)
+    returned = subfield_is_in_record(record, "H2013.12/2", '037', 'a')
+    assert returned == "H2013.12/2"
+
+def test_subfield_is_in_record_range_end_num(single_record):
+    record = (single_record)
+    record.add_ordered_field(ms_field)
+    for field in record.get_fields('037'):
+        print(field)
+    returned = subfield_is_in_record(record, "MS12345/1/PHO235", '037', 'a')
+    assert returned == "MS12345/1/PHO235"
+
+def test_subfield_is_in_record_range_period():
+    record = deepcopy(test_037_range)
+    record.add_field(rwp_field)
+    returned = subfield_is_in_record(record, "RWP/A19.14", '037', 'a')
+    assert returned == "RWP/A19.14"
 
 def test_fix_245_indicators(temp_marc_file):
     with open(temp_marc_file, 'rb') as mf:
