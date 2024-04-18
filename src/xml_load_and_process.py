@@ -294,3 +294,146 @@ def fix_indicators(record):
     wr = fix_773_ind1(wr)
     wr = fix_830_ind2(wr)
     return wr
+
+def make_suffix_list(start, end, text_part=""):
+    """
+    args:
+        start (int) : Numeric start of id range
+        end (int) : Numeric end of id range.
+        text_part (str) : Identifier prefix, eg PHO. If none, defaults to ""
+    """
+    output = []
+    for item in range(start, end+1):
+        if text_part is not None:
+            id = text_part + str(item)
+        else:
+            id = str(item)
+        output.append(id)
+    return output
+
+def enumerate_037(id_range):
+    """Function for taking id range and returning a list of all identifiers. 
+    Currently works for identifiers with / character before range and - in range.
+    eg. H83.12/1-5, MS12345/1/PHO234-235. If the id cannot be enumerated returns input in a list.
+    Does not handle alphabetic suffixes (eg. H2012.12/1a-c)"""
+    # if doesn't contain "-" return value as item in list.
+    if "-" not in id_range or "/" not in id_range:
+        return [id_range]
+    
+    # check that range doesn't end with letter
+    if not id_range[-1].isnumeric():
+        return [id_range]
+
+    # else, split by last index of /
+    id_root, id_suffix = id_range[0:id_range.rfind("/")], id_range[id_range.rfind("/")+1:]
+    end_part = id_suffix.split("-")
+
+    # declare variables
+    text_part_end = None
+    text_part_start = None
+
+    if "." in id_suffix: # RWP has this style
+        first_prefix = None
+        first_suffix = None
+        second_prefix = None
+        second_suffix = None
+        print("Full stop in id")
+        if "." in end_part[0]:
+            first_prefix, first_suffix = end_part[0].split(".")
+        else:
+            first_suffix = end_part[0]
+        if "." in end_part[1]:
+            second_prefix, second_suffix = end_part[1].split(".")
+        else:
+            second_suffix = end_part[1]
+        if first_prefix and first_suffix:
+            if first_suffix.isnumeric():
+                start = int(first_suffix)
+                text_part_start = first_prefix
+            else:
+                return [id_range]
+        elif first_suffix:
+            if first_suffix.isnumeric():
+                start = int(first_suffix)
+            else:
+                return [id_range]
+        if second_prefix and second_suffix:
+            if second_suffix.isnumeric():
+                end = int(second_suffix)
+                text_part_start = second_prefix
+            else:
+                return [id_range]
+        elif second_suffix:
+            if second_suffix.isnumeric():
+                end = int(second_suffix)
+            else:
+                return [id_range]
+            
+        # check if the text part is the same between both bits
+        if text_part_start is not None and text_part_end is not None:
+            if text_part_start == text_part_end:
+                text_part = text_part_start + "."
+            else:
+                logger.info(f"Identifier range: {id_range} has conflicting start and end prefixes.")
+                return [id_range]
+        elif text_part_start is not None:
+            text_part = text_part_start + "."
+        elif text_part_end is not None:
+            return [id_range]
+        
+        # finalise the . output version.
+        suffixes = make_suffix_list(start, end, text_part)
+        output = []
+        for item in suffixes:
+            identifier = id_root + r"/" + item
+            output.append(identifier)
+        output.sort()
+        return output
+        
+    # MS and H identifiers
+    first = end_part[0]
+    if not first.isnumeric():
+        text_part = re.sub("\d+\.?","",first)
+        num_part = re.sub("\D+", "", first)
+        start = int(num_part)
+        if text_part is not None:
+            if first.startswith(text_part):
+                prefix = True
+            else:
+                suffix = True
+    else:
+        start = int(first)
+        text_part = None
+
+    # Second part
+    second = end_part[1]
+    if not second.isnumeric():
+        text_part_second = re.sub("\d+","",second)
+        num_part = re.sub("\D+\.?", "", second)
+        start = int(num_part)
+        if text_part:
+            if not text_part == text_part_second:
+                print("Exiting at second indicator check against text_part")
+                return [id_range] # something weird if this happens
+        else: 
+            text_part = text_part_second
+        if second.startswith(text_part):
+            prefix = True
+        else:
+            suffix = True
+        end = int(num_part)
+    else:
+        end = int(second)
+
+    final_range = make_suffix_list(start, end, text_part)
+
+    # count through output to get final
+    output = []
+    print(start)
+    print(end)
+    for item in final_range:
+        id = id_root + r"/" + item
+        output.append(id)
+    print("Exiting at full process, post update")
+    output.sort()
+    return output
