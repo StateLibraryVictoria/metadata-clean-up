@@ -64,7 +64,7 @@ Iterates through the many records and performs the following:
 - fixes indicators.
 - fixes 655 trailing punctuation on $2 gmgpc subject headings.
 - Generates a final merged MARC record in an output director with a MarcEdit validation report and MARC Text File (.mrk).
-Requests user input for output filename and creates a MarcEdit validation report in the same direcotry.
+Requests user input for output filename and creates a MarcEdit validation report in the same directory.
 
 
 ### In development scripts 
@@ -79,6 +79,18 @@ Retrieves a list of MMS Ids supplied as a csv value in the environment variable 
 #### update_037.py
 
 Script for updating accession numbers from another list. Takes a list with accession numbers and mms ids and uses pandas to manage record handling. 
+
+- Takes an Excel spreadsheet as input.
+- Gets accession numbers and identifiers from sheet.
+- Makes API call to retrieve records
+- Gets list of parent MMS Ids from the records
+- Makes API call to retrieve unique records
+- Checks accession numbers against parent records
+    - Updates if whitespace is different to parent
+- Writes exceptions to exceptions file and log.
+- Updates files with matches with a valid 037.
+- Tidies up MANY records based on data in parent records.
+- Creates .mrc, .mrk, and validation reports for successful updates and exceptions.
 
 ## Supporting functions
 

@@ -229,13 +229,13 @@ def get_list_error_ids(validator_report):
     logger.info(f"Number of records with errors identified: {len(identifiers)}")
     return identifiers
 
-def output_file_with_validation(record_source_path, output_directory, filename=None, merged=False):
+def output_file_with_validation(source_record_path, output_directory, output_filename=None, merged=False):
     """Creates merged MARC file in output directory with MarcEdit validation report and MARC Text File (.mrk).
 
         Args:
-        record_source_path (str / path) - location of files to be added to output.
+        source_record_path (str / path) - location of files to be added to output.
         output_directory (str / path) - output location.
-        filename (str) - output filename. If this is not set, will prompt user for 
+        output_filename (str) - output filename. If this is not set, will prompt user for 
                         input in terminal.
         merged (bool) - Default to False which runs merge processing, but can be 
                         set to True to run on files that have alreay been merged
@@ -247,11 +247,11 @@ def output_file_with_validation(record_source_path, output_directory, filename=N
         Runs cmarkedit.exe on file to create a validation report and a .mrk file.
 
     """
-    if filename is None:
+    if output_filename is None:
         print("Enter filename for merged MARC file.")
         merge_filename = input()
     else:
-        merge_filename = filename
+        merge_filename = output_filename
     if not merge_filename.endswith(".mrc"):
         merge_filename, ext = os.path.splitext(merge_filename)
         merge_filename = merge_filename + ".mrc"
@@ -259,19 +259,19 @@ def output_file_with_validation(record_source_path, output_directory, filename=N
     print(merge_output)
     if not merged:
         try:
-            merge_marc_records(record_source_path, merge_output)
+            merge_marc_records(source_record_path, merge_output)
             print(f"File has been created at: {merge_output}")
             logger.info(f"File has been created at: {merge_output}")
         except Exception as e:
             print(f"Merge failed: {e}")
             logger.info(f"Merge failed: {e}")
     try: 
-        break_marc_record(record_source_path, merge_output.replace(".mrc",".mrk"))
+        break_marc_record(source_record_path, merge_output.replace(".mrc",".mrk"))
         print("MARK Text file (.mrk) created.")
     except Exception as e:
         print(f"Generation of .mrk file failed: {e}")
     try:
         validation_filename = merge_output.replace(".mrc", "_validation.txt")
-        validate_mrc_record(record_source_path, validation_filename)
+        validate_mrc_record(source_record_path, validation_filename)
     except Exception as e:
         print(f"Validation of merged records faild: {e}")
