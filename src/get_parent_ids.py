@@ -41,6 +41,22 @@ def big_bang_replace(many_record, parent_record):
     series = ["800", "810", "811", "830"]
     notRepeatable = ["010","018","036","038","040","042","044","045","066","100","110","111","130","240","243","245","254", "256", "263", "306","357","507","514"]
     replace_list = [onexx, pub_year, subjects, added_entries, series]
+    
+    # Checks for 246 without indicators and adds 246 to iterable if exists.
+    replace_246 = False
+    alt_title = ["246"]
+    if len(many_record.get_fields('246')) > 0:
+        fields = many_record.get_fields('246')
+        check_fields = [1 for field in fields if field.indicator1 == " " and field.indicator2 == " "]
+        if sum(check_fields) == len(fields):
+            replace_246 = True
+            
+    
+    if replace_246:
+        fix_record.remove_fields('246')
+        replace_list.append(alt_title)
+
+    # Update fields from parent record
     in_parent = []
     try:
         for list in replace_list:
@@ -54,35 +70,31 @@ def big_bang_replace(many_record, parent_record):
                     in_parent.append(item)
     except Exception as e:
         print(f"Error setting up list of present fields in parent for big bang replace: {e}")
-    try:
+    try: # remove records
         for item in in_parent:
             if item.startswith('1'):
                 for tag in onexx:
                     fix_record.remove_fields(tag)
-                for field in parent_record.get_fields(item):
-                    fix_record.add_ordered_field(field)
             if item.startswith('2'):
                 for tag in pub_year:
                     fix_record.remove_fields(tag)
-                for field in parent_record.get_fields(item):
-                    fix_record.add_ordered_field(field)
             elif item.startswith('6'):
                 for tag in subjects:
                     fix_record.remove_fields(tag)
-                for field in parent_record.get_fields(item):
-                    fix_record.add_ordered_field(field)
             elif item.startswith('7'):
                 for tag in added_entries:
                     fix_record.remove_fields(tag)
-                for field in parent_record.get_fields(item):
-                    fix_record.add_ordered_field(field)
             elif item.startswith('8'):
                 for tag in series:
                     fix_record.remove_fields(tag)
-                for field in parent_record.get_fields(item):
-                    fix_record.add_ordered_field(field)
     except Exception as e:
-        print(f"Error replacing fields in many record: {e}")
+        print(f"Error removing fields in many record: {e}")
+    try:
+        for item in in_parent:
+            for field in parent_record.get_fields(item):
+                fix_record.add_ordered_field(field)
+    except Exception as e:
+        print(f"Error adding fields to many record {e}")
     return fix_record
 
 def get_parent_id(pymarc_record):
@@ -233,6 +245,7 @@ Input: Source directory containing XML records
 Processing: iterate_get_parents and format_ids_for_api
 Output: String containing mms ids separated by commas.
 """
+
 
 
 def parent_ids_to_string(source_directory):
