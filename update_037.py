@@ -13,6 +13,9 @@ from src.api_call import *
 logger = logging.getLogger(__name__)
 debug_log_config("log_file")
 
+# Debugging flag - set to True to work with existing records or False to start from scratch.
+downloaded_records = False
+
 # Setup workspace
 setup_directories()
 ROOT_DIR = os.path.abspath(os.curdir)
@@ -26,10 +29,13 @@ valid_output = os.path.join(merge_path, "updated_records.mrc")
 invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
 
 # cleanup directories for temporary files
-#clear_temporary_files()
+if downloaded_records:
+    print("Not clearing directory, working with downloaded records.")
+else:
+    clear_temporary_files()
 
 # Load identifiers and accession numbers from spreadsheet
-filename = "acc-minus-duplicates-csv_unique_root.xlsx"
+filename = "acc_no_no_dupes_filtered_index3_acc_endswith2or4.xlsx"
 location = os.path.join(ROOT_DIR,"input","load","excel", filename)
 df = get_identifiers_from_spreadsheet(location)
 headers = list(df)
@@ -43,13 +49,16 @@ for head in headers:
         identifiers.extend(expected)
 
 # Get MARC record from API
-"""if check_api_key():
-    try:
-        get_missing_records([], identifiers, output_dir_many)
-    except Exception as e:
-        print(f"Error retrieving bibs: {e}")
-        logger.error(f"Error retrieving bibs: {e}")
-"""
+if downloaded_records:
+    print("Not calling API, working with downloaded records.")
+else:
+    if check_api_key():
+        try:
+            get_missing_records([], identifiers, output_dir_many)
+        except Exception as e:
+            print(f"Error retrieving bibs: {e}")
+            logger.error(f"Error retrieving bibs: {e}")
+
 
 # Get PARENT records from API
 record_files = get_callable_files(output_dir_many)
@@ -62,15 +71,18 @@ parent_df.mms_id = parent_df.mms_id.str.strip()
 # Create list of ids for API request
 unique_parents = parent_df.parent_id.unique().tolist()
 
-"""
+
 # get parents via Alma API
-if check_api_key():
-    try:
-        get_missing_records([], unique_parents, output_dir_parent)
-    except Exception as e:
-        print(f"Error retrieving bibs: {e}")
-        logger.error(f"Error retrieving bibs: {e}")
-        """
+if downloaded_records:
+    print("Not calling API, working with downloaded records.")
+else:
+    if check_api_key():
+        try:
+            get_missing_records([], unique_parents, output_dir_parent)
+        except Exception as e:
+            print(f"Error retrieving bibs: {e}")
+            logger.error(f"Error retrieving bibs: {e}")
+
 
 # Add parent ids to df
 df_join = pd.merge(df.assign(mms_id=df.mms_id.astype(str)), 
@@ -121,8 +133,8 @@ for index, row in df_join.iterrows():
                         output.write(parent_rec.as_marc()) # writes parent record to invalid_output file for QA.
                     logger.info(f"Record written to exceptions file: {invalid_output}")
     except Exception as e:
-        print(f"Error getting parent 037 using subfield_is_in_record method {e}")
-    try: # Processing target record
+        print(f"Error getting parent 037 using subfield_is_in_record method for record {row}. Error: {e}")
+    try:
         if match_parent:
             with open(row['filename'], 'rb') as fh:
                 reader = pymarc.MARCReader(fh)
@@ -204,7 +216,15 @@ for id, acc, exi in list_has_037:
     logger.info(f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}")
 
 # Validate and return how many records failed.
-valid_path, valid_name = os.path.split(valid_output)
-output_file_with_validation(valid_output, valid_path, filename=valid_name, merged=True)
-invalid_path, invalid_name = os.path.split(invalid_output)
-output_file_with_validation(invalid_output, invalid_path, filename=invalid_name, merged=True)
+if os.path.isfile(valid_output):
+    valid_path, valid_name = os.path.split(valid_output)
+    output_file_with_validation(valid_output, valid_path, output_filename=valid_name, merged=True)
+else:
+    print("No valid records written to file.")
+
+# check file exists
+if os.path.isfile(invalid_output):
+    invalid_path, invalid_name = os.path.split(invalid_output)
+    output_file_with_validation(invalid_output, invalid_path, output_filename=invalid_name, merged=True)
+else:
+    print("No exceptions written to file.")
