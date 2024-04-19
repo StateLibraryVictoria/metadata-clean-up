@@ -256,7 +256,7 @@ def output_file_with_validation(source_record_path, output_directory, output_fil
         merge_filename, ext = os.path.splitext(merge_filename)
         merge_filename = merge_filename + ".mrc"
     merge_output = os.path.join(output_directory,merge_filename)
-    print(merge_output)
+
     if not merged:
         try:
             merge_marc_records(source_record_path, merge_output)
