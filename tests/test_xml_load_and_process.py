@@ -296,7 +296,7 @@ def test_fix_773_ind1(single_record):
     wr = fix_773_ind1(record)
     assert wr['773'].indicator1 == "0"
 
-# hard case: ("H2004.65/87a-c",["H2004.65/87a-c","H2004.65/87a-c","H2004.65/87a-c"])
+# Edge cases not yet integrated "H16964-H16981", "MS 1433-MS 1447"
 @pytest.mark.parametrize("input, expected", 
                           [
                              ("H83.12/1-5", ["H83.12/1", "H83.12/2", "H83.12/3", "H83.12/4", "H83.12/5"]), 
@@ -305,7 +305,9 @@ def test_fix_773_ind1(single_record):
                              ("MS12345/1/PHO234-235", ["MS12345/1/PHO234","MS12345/1/PHO235"]), 
                              ("RWP/A19.13-15", ["RWP/A19.13","RWP/A19.14","RWP/A19.15"]),
                              ("RWPA19.13-15", ["RWPA19.13-15"]),
-                             ("IAN01/01/95/12-13a",["IAN01/01/95/12-13a"])
+                             ("IAN01/01/95/12-13a",["IAN01/01/95/12-13a"]),
+                             ("H2012.200/248 - H2012.200/251", ["H2012.200/248", "H2012.200/249", "H2012.200/250", "H2012.200/251"]),
+                             ("H2012.12/12 - H2013.13/13", ["H2012.12/12 - H2013.13/13"])
                           ]
                         )
 def test_enumerate_037(input, expected):
