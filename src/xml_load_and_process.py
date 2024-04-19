@@ -134,8 +134,7 @@ def replace_field(target_record, source_record, field):
     if copy_fields is not None:
         target_record = add_field_to_target(target_record, copy_fields)
         
-    updated_target_record = fix_655_gmgpc(target_record)
-    return updated_target_record
+    return target_record
     
 
 def fix_655_gmgpc(record):
@@ -332,8 +331,20 @@ def enumerate_037(id_range):
     if not id_range[-1].isnumeric():
         return [id_range]
 
+    # whole part case (eg. "H2012.200/248 - H2012.200/251")
+    id_range_stripped = id_range.replace(" ","")
+    part1, part2 = id_range_stripped.split("-")
+    if "/" in part1 and "/" in part2:
+        root1 = part1[0:part1.rfind("/")]
+        root2 = part2[0:part2.rfind("/")]
+        if root1 == root2:
+            id_root = root1
+            id_range_stripped = id_root + "/" + part1[part1.rfind("/")+1:] + "-" + part2[part2.rfind("/")+1:]
+        
+        
+
     # else, split by last index of /
-    id_root, id_suffix = id_range[0:id_range.rfind("/")], id_range[id_range.rfind("/")+1:]
+    id_root, id_suffix = id_range_stripped[0:id_range_stripped.rfind("/")], id_range_stripped[id_range_stripped.rfind("/")+1:]
     end_part = id_suffix.split("-")
 
     # declare variables
@@ -345,7 +356,6 @@ def enumerate_037(id_range):
         first_suffix = None
         second_prefix = None
         second_suffix = None
-        print("Full stop in id")
         if "." in end_part[0]:
             first_prefix, first_suffix = end_part[0].split(".")
         else:
@@ -399,7 +409,10 @@ def enumerate_037(id_range):
         return output
         
     # MS and H identifiers
-    first = end_part[0]
+    try:
+        first = end_part[0]
+    except IndexError:
+        return [id_range]
     if not first.isnumeric():
         text_part = re.sub("\d+\.?","",first)
         num_part = re.sub("\D+", "", first)
@@ -414,14 +427,16 @@ def enumerate_037(id_range):
         text_part = None
 
     # Second part
-    second = end_part[1]
+    try:
+        second = end_part[1]
+    except IndexError:
+        return [id_range]
     if not second.isnumeric():
         text_part_second = re.sub("\d+","",second)
         num_part = re.sub("\D+\.?", "", second)
         start = int(num_part)
         if text_part:
             if not text_part == text_part_second:
-                print("Exiting at second indicator check against text_part")
                 return [id_range] # something weird if this happens
         else: 
             text_part = text_part_second
@@ -437,11 +452,8 @@ def enumerate_037(id_range):
 
     # count through output to get final
     output = []
-    print(start)
-    print(end)
     for item in final_range:
         id = id_root + r"/" + item
         output.append(id)
-    print("Exiting at full process, post update")
     output.sort()
     return output
