@@ -1,4 +1,5 @@
 import pytest
+import pymarc
 from src.get_parent_ids import *
 from src.shared_functions import get_callable_files
 
@@ -36,3 +37,46 @@ def test_iterate_get_parent():
     assert id_list[0] == ["9939647808307636", "9916783623607636"]
     assert id_list[1] == ["9939647812307636", "9922700093607636"]
     
+good_246 = pymarc.Field(
+    tag = '246',
+    indicators = ['0', '5'], # arbitrary values
+    subfields = [
+        pymarc.Subfield(code='a', value="The result we want"), 
+        pymarc.Subfield(code='i', value="Some kind of note")
+    ]
+)
+
+bad_246 = pymarc.Field(
+    tag = '246',
+    indicators = [' ', ' '], # wrong value to make sure it doesn't change when set
+    subfields = [
+        pymarc.Subfield(code='a', value="The result we have"), # Would be 2 if changed
+    ]
+)
+
+fine_246 = pymarc.Field(
+    tag = '246',
+    indicators = [' ', '1'], # wrong value to make sure it doesn't change when set
+    subfields = [
+        pymarc.Subfield(code='a', value="The result we have"), # Would be 2 if changed
+    ]
+)
+
+
+# big bang cleanup unit tests.
+def test_big_bang_cleanup_246_replaces(single_record):
+    parent = deepcopy(single_record)
+    parent.add_field(good_246)
+    many = deepcopy(single_record)
+    many.add_field(bad_246)
+    many = big_bang_replace(many, parent)
+    assert many['246']['a'] == "The result we want"
+    assert many['246']['i'] == "Some kind of note"
+
+def test_big_bang_cleanup_246_indicator(single_record):
+    parent = deepcopy(single_record)
+    parent.add_field(good_246)
+    many = deepcopy(single_record)
+    many.add_field(fine_246)
+    many = big_bang_replace(many, parent)
+    assert many['246']['a'] == "The result we have"
