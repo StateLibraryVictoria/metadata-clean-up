@@ -35,7 +35,7 @@ else:
     clear_temporary_files()
 
 # Load identifiers and accession numbers from spreadsheet
-filename = "acc_no_no_dupes_filtered_index3_acc_endswith2or4.xlsx"
+filename = "acc_final_letter_endswith_7_or_3.xlsx"
 location = os.path.join(ROOT_DIR,"input","load","excel", filename)
 df = get_identifiers_from_spreadsheet(location)
 headers = list(df)
@@ -129,6 +129,7 @@ for index, row in df_join.iterrows():
                     counter += 1
                 else:
                     list_not_match.append((row['mms_id'], row['file_label']))
+                    match_parent = False
                     with open(invalid_output, 'ab') as output:
                         output.write(parent_rec.as_marc()) # writes parent record to invalid_output file for QA.
                     logger.info(f"Record written to exceptions file: {invalid_output}")
