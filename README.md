@@ -69,6 +69,12 @@ Requests user input for output filename and creates a MarcEdit validation report
 
 ### In development scripts 
 
+## Future scripts
+
+Creating scripts for the creation of MANY records.  
+- Taking data from Excel spreadsheet 
+- Creates 1xx, 300, 6xx from parent records
+
 #### run_call.py
 
 Retrieves a list of MMS Ids supplied as a csv value in the environment variable MMS_IDS, writes the XML records to output directory, and retrieves a list of parent record MMS Ids.
