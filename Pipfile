@@ -11,5 +11,6 @@ pytest = "*"
 black = "*"
 pandas = "*"
 openpyxl = "*"
+dateparser = "*"
 
 [dev-packages]
