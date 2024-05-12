@@ -4,6 +4,9 @@ import re
 import logging
 from copy import deepcopy
 import re
+import dateparser
+import dateutil.parser
+from datetime import datetime
 from src.logger_config import *
 
 logger = logging.getLogger(__name__)
@@ -27,49 +30,68 @@ def get_fields_from_source(source_record, field):
 
     # Check that field in source record.
     if tag.startswith("1"):
-        match_fields = source_record.get_fields('100','110','111','130')
+        match_fields = source_record.get_fields("100", "110", "111", "130")
     else:
         match_fields = source_record.get_fields(tag)
     if len(match_fields) == 0:
-        amount = f"no {tag} fields" if len(source_record.get_fields(tag)) < 1 else f"too many {tag} fields"
-        logger.warning(f"Source record contains {amount}. "
-                        + "Cancelling operation.")
+        amount = (
+            f"no {tag} fields"
+            if len(source_record.get_fields(tag)) < 1
+            else f"too many {tag} fields"
+        )
+        logger.warning(f"Source record contains {amount}. " + "Cancelling operation.")
         return None
     else:
-        logger.info(f"Source record contains {len(match_fields)} copies of field {tag}. "
-                        + "Continuing operation")
+        logger.info(
+            f"Source record contains {len(match_fields)} copies of field {tag}. "
+            + "Continuing operation"
+        )
     return match_fields
 
 
 def remove_field_from_target(target_record, tag):
     """Removes all copies of a field by tag. Removes all 1xx fields when a 100, 110, 111, 130 supplied."""
-    try: # try to remove the fields from the record to be updated
+    try:  # try to remove the fields from the record to be updated
         if tag.startswith("1"):
-            target_1xx = target_record.get_fields('100', '110', '111', '130')
+            target_1xx = target_record.get_fields("100", "110", "111", "130")
             logger.info(f"Removing {len(target_1xx)} subfields from record.")
             print(f"Removing {len(target_1xx)} subfields from record.")
             if len(target_1xx) > 1:
                 print("Multiple 1xx fields removed. See log for details.")
-                logger.warn("Multiple 1xx fields removed. All fields have been removed.")
+                logger.warn(
+                    "Multiple 1xx fields removed. All fields have been removed."
+                )
             for f in target_1xx:
                 logger.info(f"Record contains field: {f.tag}")
                 print(f"Record contains field: {f.tag}")
                 target_record.remove_field(f)
-                logger.info(f"Success: " + f.tag + " " + f.format_field() + " removed from record.")
+                logger.info(
+                    f"Success: "
+                    + f.tag
+                    + " "
+                    + f.format_field()
+                    + " removed from record."
+                )
         else:
-            logger.info(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
-            print(f"Removing {len(target_record.get_fields(tag))} subfields from record.")
+            logger.info(
+                f"Removing {len(target_record.get_fields(tag))} subfields from record."
+            )
+            print(
+                f"Removing {len(target_record.get_fields(tag))} subfields from record."
+            )
             for f in target_record.get_fields(tag):
                 target_record.remove_field(f)
         logger.info(f"Success: {tag} removed from target.")
         print(f"Success: {tag} removed from target.")
         return target_record
     except Exception as e:
-        logger.error(f"Error with replace field method. Could not get and remove field from target record. Error: {e}")
+        logger.error(
+            f"Error with replace field method. Could not get and remove field from target record. Error: {e}"
+        )
 
 
 def add_field_to_target(target_record, fields, replace=True):
-    """ Returns the target record with the passed subfield. Default strips existing instances of field.
+    """Returns the target record with the passed subfield. Default strips existing instances of field.
 
     Args:
         target_record: pymarc Record object - record requiring updating.
@@ -79,8 +101,31 @@ def add_field_to_target(target_record, fields, replace=True):
     Returns:
         pymarc Record object: transformed record.
     """
-    notRepeatable = ["010","018","036","038","040","042","044","045","066","100","110","111","130","240","243","245","254", "256", "263", "306","357","507","514"]
-
+    notRepeatable = [
+        "010",
+        "018",
+        "036",
+        "038",
+        "040",
+        "042",
+        "044",
+        "045",
+        "066",
+        "100",
+        "110",
+        "111",
+        "130",
+        "240",
+        "243",
+        "245",
+        "254",
+        "256",
+        "263",
+        "306",
+        "357",
+        "507",
+        "514",
+    ]
 
     # Check that only one of non-repeatable fields are in supplied fields.
     tag_list = []
@@ -90,22 +135,25 @@ def add_field_to_target(target_record, fields, replace=True):
     for tag in tag_list:
         if tag in notRepeatable:
             if tag_list.count(tag) > 1:
-                print(f"Source record has multiple copies of unrepeatable field {tag}. Skipping record.")
-                logger.error(f"Source record has multiple copies of unrepeatable field {tag}. Skipping record.")
+                print(
+                    f"Source record has multiple copies of unrepeatable field {tag}. Skipping record."
+                )
+                logger.error(
+                    f"Source record has multiple copies of unrepeatable field {tag}. Skipping record."
+                )
                 return target_record
-    
-    logger.info("Processing record: " + target_record.get_fields('001')[0].value())
+
+    logger.info("Processing record: " + target_record.get_fields("001")[0].value())
 
     # remove existing fields
     if replace:
         for field in fields:
             target_record = remove_field_from_target(target_record, field.tag)
-    else: # removes non repeatable fields from target record
+    else:  # removes non repeatable fields from target record
         for field in fields:
             if field.tag in notRepeatable:
                 target_record = remove_field_from_target(target_record, field.tag)
-        
-        
+
     # Add copy field to target record.
     for field in fields:
         try:
@@ -115,6 +163,7 @@ def add_field_to_target(target_record, fields, replace=True):
             return None
     return target_record
 
+
 def replace_field(target_record, source_record, field):
     """Replaces a field in one record with the value from another.
 
@@ -122,47 +171,49 @@ def replace_field(target_record, source_record, field):
         target_record (pymarc record object): record requiring updating.
         source_record (pymarc record object): record containing data to be merged
                                               into target.
-        field (str | pymarc Field object): Marc field tag for example "100", 
+        field (str | pymarc Field object): Marc field tag for example "100",
                             or Field object that can use inbuilt tag.
 
     Returns:
         pymarc record object: target record with or without updates.
     """
     copy_fields = get_fields_from_source(source_record, field)
-    
 
     if copy_fields is not None:
         target_record = add_field_to_target(target_record, copy_fields)
-        
+
     return target_record
-    
+
 
 def fix_655_gmgpc(record):
     """Fixes trailing punctuation from 655 with $2 gmgpc subject headings."""
-    fields = record.get_fields('655')
+    fields = record.get_fields("655")
 
     for field in fields:
-        if len(field.get_subfields('2')) > 0:
-            field['2'] = 'gmgpc' if field['2'].startswith('gmgpc') \
-                else field['2'] # strips out trailing punctuation/whitespace in $2
-            value = field['a'] if field['2'] == 'gmgpc' else ""
+        if len(field.get_subfields("2")) > 0:
+            field["2"] = (
+                "gmgpc" if field["2"].startswith("gmgpc") else field["2"]
+            )  # strips out trailing punctuation/whitespace in $2
+            value = field["a"] if field["2"] == "gmgpc" else ""
 
-            if not value.endswith("."): # adds final period to gmgpc if required.
-                field['a'] = value + "."
-    
+            if not value.endswith("."):  # adds final period to gmgpc if required.
+                field["a"] = value + "."
+
     return record
+
 
 def is_parent(record):
     """Returns True if 956$b == PARENT"""
-    fields = record.get_fields('956')
+    fields = record.get_fields("956")
     for field in fields:
-        if field['b'] == "PARENT":
+        if field["b"] == "PARENT":
             return True
     return False
 
+
 def record_to_mrc(record, output_filename):
     """Write xml record to mrc file.
-    
+
     Args:
         record (pymarc Record object)
         output_filename (str): path and filename for output mrc file.
@@ -170,7 +221,7 @@ def record_to_mrc(record, output_filename):
     Processing:
         XML is translated into MARC binary and appended to desired file.
     """
-    with open(output_filename, 'ab') as out:
+    with open(output_filename, "ab") as out:
         out.write(record.as_marc())
     out.close()
 
@@ -178,10 +229,10 @@ def record_to_mrc(record, output_filename):
 def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     """Returns matching subfield from a record matching either exact or with whitespace stripped.
 
-        Args:
-        record: (pymarc Record object)
-        query: (str) - value expected in field
-        tag: (str)
+    Args:
+    record: (pymarc Record object)
+    query: (str) - value expected in field
+    tag: (str)
     """
     # check record is Record
     if not isinstance(record, pymarc.record.Record):
@@ -191,23 +242,25 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     for item in record.get_fields(tag):
         if item[subfield] == query:
             return query
-        elif item[subfield].replace(" ","") == query.replace(" ",""):
+        elif item[subfield].replace(" ", "") == query.replace(" ", ""):
             return item[subfield]
         # 037 case for ranged identifiers
-        elif tag == '037' and "-" in item[subfield]:
+        elif tag == "037" and "-" in item[subfield]:
             identifiers = enumerate_037(item[subfield])
             for id in identifiers:
-                if id == query or id.replace(" ","") == query.replace(" ",""):
+                if id == query or id.replace(" ", "") == query.replace(" ", ""):
                     return id
         else:
             continue
-    
+
     # log failed records and return None
     for item in record.get_fields(tag):
         try:
-            logger.info(f"No match found for {query} in {tag} ${subfield} in record {record['001'].value()}. Record has 037: {item}")
+            logger.info(
+                f"No match found for {query} in {tag} ${subfield} in record {record['001'].value()}. Record has 037: {item}"
+            )
         except Exception as e:
-                print(f"error adding log for failed query search {e}")
+            print(f"error adding log for failed query search {e}")
     return None
 
 
@@ -219,88 +272,95 @@ def get_nonfiling_characters(string):
     query = re.search(nonfiling, string.lower())
     return query.group()
 
+
 def fix_245_indicators(record):
     """Checks aspects of the 245 in a record and updates indicators"""
     wr = deepcopy(record)
     title = wr.title
 
     # fix first indicator - 0 - No added entry, 1 - Added entry (no 1xx)
-    if len(wr.get_fields('100', '110', '111', '130')) == 0:
-        first_indicator = '1'
+    if len(wr.get_fields("100", "110", "111", "130")) == 0:
+        first_indicator = "1"
     else:
-        first_indicator = '0'
+        first_indicator = "0"
     # If second indicator is not numeric, get nonfiling and calculate length.
-    valid_ind2 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    current_ind2 = wr['245'].indicator2
+    valid_ind2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    current_ind2 = wr["245"].indicator2
     if current_ind2 not in valid_ind2:
         prefix_store = get_nonfiling_characters(title)
         if prefix_store is not None:
             second_indicator = str(len(prefix_store))
         else:
-            second_indicator = '0'
+            second_indicator = "0"
     else:
-        second_indicator = wr['245'].indicator2
+        second_indicator = wr["245"].indicator2
 
-    for field in wr.get_fields('245'):
+    for field in wr.get_fields("245"):
         field.indicator1 = first_indicator
         field.indicator2 = second_indicator
-    wr.remove_fields('245')
+    wr.remove_fields("245")
     wr.add_ordered_field(field)
     return wr
+
 
 # Fix 773-ind1 : 0 - Display note, 1 - Do not display note
 def fix_830_ind2(record):
     # Check if record has 830.
-    fix_830 = record.get_fields('830')
+    fix_830 = record.get_fields("830")
     if len(fix_830) == 0:
         return record
     # Process existing 830s
     wr = deepcopy(record)
-    wr.remove_fields('830')
-    valid_ind2 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    wr.remove_fields("830")
+    valid_ind2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     for field in fix_830:
         if field.indicator2 not in valid_ind2:
             try:
-                title = field['a']
+                title = field["a"]
                 field.indicator2 = str(len(get_nonfiling_characters(title.lower())))
                 wr.add_ordered_field(field)
             except Exception as e:
                 print(f"Error getting subfield $a from 830: {e}")
-                logger.error(f"Error for record {wr['001'].value()} getting subfield $a from 830: {e}")
+                logger.error(
+                    f"Error for record {wr['001'].value()} getting subfield $a from 830: {e}"
+                )
     return record
-            
+
+
 def fix_773_ind1(record):
-    fix_730 = record.get_fields('773')
+    fix_730 = record.get_fields("773")
     if len(fix_730) == 0:
         return record
     wr = deepcopy(record)
-    wr.remove_fields('773')
+    wr.remove_fields("773")
     for field in fix_730:
-        if field.indicator1 not in ['0', '1']:
-            field.indicator1 = '0'
+        if field.indicator1 not in ["0", "1"]:
+            field.indicator1 = "0"
         wr.add_ordered_field(field)
     return wr
-    
+
+
 def fix_1xx_ind2(record):
-    xx1 = record.get_fields('100', '110', '111', '130')
+    xx1 = record.get_fields("100", "110", "111", "130")
     if len(xx1) == 0:
         return record
     wr = deepcopy(record)
-    wr.remove_fields('100', '110', '111', '130')
+    wr.remove_fields("100", "110", "111", "130")
     for field in xx1:
         field.indicator2 = "\\"
         wr.add_ordered_field(field)
     return wr
 
+
 def fix_indicators(record):
-    """Applies fixes for 1xx-ind2, 245-ind1, 245-ind2, 773-ind1, 830-ind2.
-    """
+    """Applies fixes for 1xx-ind2, 245-ind1, 245-ind2, 773-ind1, 830-ind2."""
     wr = deepcopy(record)
     wr = fix_1xx_ind2(wr)
     wr = fix_245_indicators(wr)
     wr = fix_773_ind1(wr)
     wr = fix_830_ind2(wr)
     return wr
+
 
 def make_suffix_list(start, end, text_part=""):
     """
@@ -310,7 +370,7 @@ def make_suffix_list(start, end, text_part=""):
         text_part (str) : Identifier prefix, eg PHO. If none, defaults to ""
     """
     output = []
-    for item in range(start, end+1):
+    for item in range(start, end + 1):
         if text_part is not None:
             id = text_part + str(item)
         else:
@@ -318,40 +378,48 @@ def make_suffix_list(start, end, text_part=""):
         output.append(id)
     return output
 
+
 def enumerate_037(id_range):
-    """Function for taking id range and returning a list of all identifiers. 
+    """Function for taking id range and returning a list of all identifiers.
     Currently works for identifiers with / character before range and - in range.
     eg. H83.12/1-5, MS12345/1/PHO234-235. If the id cannot be enumerated returns input in a list.
     Does not handle alphabetic suffixes (eg. H2012.12/1a-c)"""
     # if doesn't contain "-" return value as item in list.
     if "-" not in id_range or "/" not in id_range:
         return [id_range]
-    
+
     # check that range doesn't end with letter
     if not id_range[-1].isnumeric():
         return [id_range]
 
     # whole part case (eg. "H2012.200/248 - H2012.200/251")
-    id_range_stripped = id_range.replace(" ","")
+    id_range_stripped = id_range.replace(" ", "")
     part1, part2 = id_range_stripped.split("-")
     if "/" in part1 and "/" in part2:
-        root1 = part1[0:part1.rfind("/")]
-        root2 = part2[0:part2.rfind("/")]
+        root1 = part1[0 : part1.rfind("/")]
+        root2 = part2[0 : part2.rfind("/")]
         if root1 == root2:
             id_root = root1
-            id_range_stripped = id_root + "/" + part1[part1.rfind("/")+1:] + "-" + part2[part2.rfind("/")+1:]
-        
-        
+            id_range_stripped = (
+                id_root
+                + "/"
+                + part1[part1.rfind("/") + 1 :]
+                + "-"
+                + part2[part2.rfind("/") + 1 :]
+            )
 
     # else, split by last index of /
-    id_root, id_suffix = id_range_stripped[0:id_range_stripped.rfind("/")], id_range_stripped[id_range_stripped.rfind("/")+1:]
+    id_root, id_suffix = (
+        id_range_stripped[0 : id_range_stripped.rfind("/")],
+        id_range_stripped[id_range_stripped.rfind("/") + 1 :],
+    )
     end_part = id_suffix.split("-")
 
     # declare variables
     text_part_end = None
     text_part_start = None
 
-    if "." in id_suffix: # RWP has this style
+    if "." in id_suffix:  # RWP has this style
         first_prefix = None
         first_suffix = None
         second_prefix = None
@@ -386,19 +454,21 @@ def enumerate_037(id_range):
                 end = int(second_suffix)
             else:
                 return [id_range]
-            
+
         # check if the text part is the same between both bits
         if text_part_start is not None and text_part_end is not None:
             if text_part_start == text_part_end:
                 text_part = text_part_start + "."
             else:
-                logger.info(f"Identifier range: {id_range} has conflicting start and end prefixes.")
+                logger.info(
+                    f"Identifier range: {id_range} has conflicting start and end prefixes."
+                )
                 return [id_range]
         elif text_part_start is not None:
             text_part = text_part_start + "."
         elif text_part_end is not None:
             return [id_range]
-        
+
         # finalise the . output version.
         suffixes = make_suffix_list(start, end, text_part)
         output = []
@@ -407,14 +477,14 @@ def enumerate_037(id_range):
             output.append(identifier)
         output.sort()
         return output
-        
+
     # MS and H identifiers
     try:
         first = end_part[0]
     except IndexError:
         return [id_range]
     if not first.isnumeric():
-        text_part = re.sub("\d+\.?","",first)
+        text_part = re.sub("\d+\.?", "", first)
         num_part = re.sub("\D+", "", first)
         start = int(num_part)
         if text_part is not None:
@@ -432,13 +502,13 @@ def enumerate_037(id_range):
     except IndexError:
         return [id_range]
     if not second.isnumeric():
-        text_part_second = re.sub("\d+","",second)
+        text_part_second = re.sub("\d+", "", second)
         num_part = re.sub("\D+\.?", "", second)
         start = int(num_part)
         if text_part:
             if not text_part == text_part_second:
-                return [id_range] # something weird if this happens
-        else: 
+                return [id_range]  # something weird if this happens
+        else:
             text_part = text_part_second
         if second.startswith(text_part):
             prefix = True
@@ -457,3 +527,90 @@ def enumerate_037(id_range):
         output.append(id)
     output.sort()
     return output
+
+
+def get_current_008_date(input):
+    # Check if string is valid
+    if len(input) != 40:
+        logger.error("Invalid 008 - length is not 40 characters")
+        raise ValueError("Invalid 008 - length is not 40 characters")
+
+    # Check date substring is position 6-14
+    substring = r"[a-z]\d\d\d[\du][\d#\\ ]{4}"
+    current = re.findall(substring, input)
+    if current[0] != input[6:15]:
+        logger.error("Date position 06-14 is not correctly aligned.")
+        raise ValueError("Date position 06-14 is not correctly aligned.")
+
+    return input[6:15]
+
+
+def parse_008_date(input):
+    """Parse 008 from input date string. Converts all inclusive dates to questionable."""
+    # Regex for stripping or determining a year value
+    circa = "c\.|ca\.|circa|approx\.|approximately"
+    year = "\d\d\d\d"
+
+    ## Get dates from String
+    years = re.findall(year, input)
+    stripped_date = re.sub("\D", "", input)
+
+    ## Try for detailed date
+    detailed_date = dateparser.parse(
+        re.sub(circa, "", input), languages=["en"], settings={"STRICT_PARSING": True}
+    )
+    if detailed_date is not None:
+        return "e" + detailed_date.strftime("%Y%m%d")
+
+    ## Try for other date types
+    if len(stripped_date) == 4 and len(years) == 1:
+        if len(re.sub("\W", "", input)) == 4:
+            return "s" + stripped_date + "    "
+        try:  ## get month.
+            detailed_month = dateutil.parser.parse(re.sub("[\[\]\?]", "", input))
+            return "e" + detailed_month.strftime("%Y%m  ")
+        except Exception as e:
+            try:
+                detailed_month = datetime.strptime(input, "%b %Y").date()
+            except Exception as e:
+                return "s" + stripped_date + "    "
+    elif len(stripped_date) == 3 and len(re.sub("\D", "", input)) == 3:
+        return "s" + stripped_date + "u    "
+    elif len(stripped_date) == 8 or "between" in input or "or" in input:
+        matches = re.findall(year, input)
+        return "q" + "".join(matches)
+    elif len(years) == 2 and len(stripped_date) > 8:
+        return "q" + years[0] + years[1]
+    else:
+        return None
+
+
+def replace_many_008_date(record):
+    current_008 = record["008"].value()
+    try:
+        get_current_008_date(current_008)
+        current_26xc = record.get_fields("260", "264")
+        date_string = None
+        for field in current_26xc:
+            if field.get("c") is not None:
+                if date_string is not None:
+                    logger.error(
+                        f"Record {record['001'].value()} contains two $c fields in the date area. Requires manual review."
+                    )
+                    raise ValueError(
+                        f"Record {record['001'].value()} contains two $c fields in the date area. Requires manual review."
+                    )
+                else:
+                    date_string = field.get("c")
+        if date_string is not None:
+            new_008 = parse_008_date(date_string)
+            if len(current_008[6:15]) == len(new_008):
+                current_008 = str.replace(current_008, current_008[6:15], new_008)
+                record.remove_fields("008")
+                field_008 = pymarc.Field(tag="008", data=current_008)
+                record.add_ordered_field(field_008)
+    except ValueError:
+        logger.error(
+            f"Invalid 008 in record {record['001'].value()}. 008 will not be replaced."
+        )
+    return record
