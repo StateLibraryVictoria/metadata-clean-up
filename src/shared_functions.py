@@ -289,13 +289,10 @@ def output_file_with_validation(
         merge_filename, ext = os.path.splitext(merge_filename)
         merge_filename = merge_filename + ".mrc"
     merge_output = os.path.join(output_directory, merge_filename)
-    print("Debugging merge output")
     print(merge_output)
 
     if not merged:
-        print("Debugging not merged check")
         try:
-            print("Debugging  merge record")
             merge_marc_records(source_record_path, merge_output)
             print(f"File has been created at: {merge_output}")
             logger.info(f"File has been created at: {merge_output}")
@@ -303,14 +300,12 @@ def output_file_with_validation(
             print(f"Merge failed: {e}")
             logger.info(f"Merge failed: {e}")
     try:
-        print("Debugging merge breaker")
         print("output filename: " + merge_output.replace(".mrc", ".mrk"))
         break_marc_record(merge_output, merge_output.replace(".mrc", ".mrk"))
         print("MARK Text file (.mrk) created.")
     except Exception as e:
         print(f"Generation of .mrk file failed: {e}")
     try:
-        print("Debugging merge output validation")
         validation_filename = merge_output.replace(".mrc", "_validation.txt")
         validate_mrc_record(merge_output, validation_filename)
     except Exception as e:
