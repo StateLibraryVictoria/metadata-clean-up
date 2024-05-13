@@ -280,9 +280,9 @@ def fix_245_indicators(record):
 
     # fix first indicator - 0 - No added entry, 1 - Added entry (no 1xx)
     if len(wr.get_fields("100", "110", "111", "130")) == 0:
-        first_indicator = "1"
-    else:
         first_indicator = "0"
+    else:
+        first_indicator = "1"
     # If second indicator is not numeric, get nonfiling and calculate length.
     valid_ind2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     current_ind2 = wr["245"].indicator2
