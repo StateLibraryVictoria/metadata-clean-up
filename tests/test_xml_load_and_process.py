@@ -258,7 +258,7 @@ def test_set_245_ind1_to_1(field_replace_record):
     record = deepcopy(field_replace_record)
     record.remove_fields("100", "110", "111", "130")
     record = fix_245_indicators(record)
-    assert record["245"].indicator1 == "1"
+    assert record["245"].indicator1 == "0"
 
 
 @pytest.mark.parametrize(
