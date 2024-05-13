@@ -4,13 +4,10 @@ import pymarc
 import pandas as pd
 from src.api_call import *
 from src.xml_load_and_process import *
-from src.logger_config import *
 from src.transform_marc_file import *
 
 
-logger = logging.getLogger(__name__)
-debug_log_config("file")
-logger.info("==Shared function script logging==")
+logger = logging.getLogger()
 
 
 def setup_directories():
@@ -81,7 +78,7 @@ def get_callable_files(dir_name):
     try:
         for root, dirs, files in os.walk(dir_name):
             files.sort()
-            output_list = [path.join(dir_name, file) for file in files]
+            output_list = [os.path.join(dir_name, file) for file in files]
         return output_list
     except Exception as e:
         logger.error(f"Error getting callable files: {e}")
@@ -233,7 +230,7 @@ def get_identifiers_from_spreadsheet(filename):
 def merge_marc_records(directory, output_filename):
     try:
         for root, dir, files in os.walk(directory):
-            dir_list = [path.join(directory, file) for file in files]
+            dir_list = [os.path.join(directory, file) for file in files]
             dir_list.sort()
     except Exception as e:
         logger.error(f"Error getting directory list for marc record merge: {e}")

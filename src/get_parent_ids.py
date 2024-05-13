@@ -1,21 +1,23 @@
 from os import path
 from copy import deepcopy
 import pymarc
-from src.logger_config import *
 from src.api_call import validate_mmsid
 from src.shared_functions import get_callable_files
 from src.xml_load_and_process import *
 
-debug_log_config("get-parent")
 logger = logging.getLogger()
 
 
 def many_record_cleanup(many_record, parent_record):
     """Runs all current cleanup actions on many record."""
     if not isinstance(many_record, pymarc.record.Record):
-        raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
+        raise Exception(
+            f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}"
+        )
     if not isinstance(parent_record, pymarc.record.Record):
-        logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+        logger.error(
+            f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}"
+        )
         return many_record
     fix_record = deepcopy(many_record)
     fix_record = big_bang_replace(fix_record, parent_record)
@@ -23,37 +25,104 @@ def many_record_cleanup(many_record, parent_record):
     fix_record = fix_655_gmgpc(fix_record)
     return fix_record
 
+
 def big_bang_replace(many_record, parent_record):
     """Replaces fields based on the big bang cleanup project.
     Fields 1xx, 260/264, 6xx, 7xx, 8xx are copied from parent to many record."""
     if not isinstance(many_record, pymarc.record.Record):
-        raise Exception(f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}")
+        raise Exception(
+            f"Record to be updated must be a pymarc Record object. Object supplied is: {type(many_record)}, value {many_record}"
+        )
     if not isinstance(parent_record, pymarc.record.Record):
-        logger.error(f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}")
+        logger.error(
+            f"Error completing big bang replace. Parent record must be a pymarc Record object. Many record: {many_record['001'].value()}"
+        )
         return many_record
     fix_record = deepcopy(many_record)
-    onexx = ['100', '110', '111', '130']
-    pub_year = ['260', '264']
-    subjects = ["600", "610", "611", "630", "648", "650", "651", "653", "654", "655",
-            "656", "657", "658", "662", "690", "691", "696", "697", "698", "699",]
-    added_entries = ["700", "710", "711", "720", "730", "740", "752", "753", "754", "790",
-            "791", "792", "793", "796", "797", "798", "799",]
+    onexx = ["100", "110", "111", "130"]
+    pub_year = ["260", "264"]
+    subjects = [
+        "600",
+        "610",
+        "611",
+        "630",
+        "648",
+        "650",
+        "651",
+        "653",
+        "654",
+        "655",
+        "656",
+        "657",
+        "658",
+        "662",
+        "690",
+        "691",
+        "696",
+        "697",
+        "698",
+        "699",
+    ]
+    added_entries = [
+        "700",
+        "710",
+        "711",
+        "720",
+        "730",
+        "740",
+        "752",
+        "753",
+        "754",
+        "790",
+        "791",
+        "792",
+        "793",
+        "796",
+        "797",
+        "798",
+        "799",
+    ]
     series = ["800", "810", "811", "830"]
-    notRepeatable = ["010","018","036","038","040","042","044","045","066","100","110","111","130","240","243","245","254", "256", "263", "306","357","507","514"]
+    notRepeatable = [
+        "010",
+        "018",
+        "036",
+        "038",
+        "040",
+        "042",
+        "044",
+        "045",
+        "066",
+        "100",
+        "110",
+        "111",
+        "130",
+        "240",
+        "243",
+        "245",
+        "254",
+        "256",
+        "263",
+        "306",
+        "357",
+        "507",
+        "514",
+    ]
     replace_list = [onexx, pub_year, subjects, added_entries, series]
-    
+
     # Checks for 246 without indicators and adds 246 to iterable if exists.
     replace_246 = False
     alt_title = ["246"]
-    if len(many_record.get_fields('246')) > 0:
-        fields = many_record.get_fields('246')
-        check_fields = [1 for field in fields if field.indicator1 == " " and field.indicator2 == " "]
+    if len(many_record.get_fields("246")) > 0:
+        fields = many_record.get_fields("246")
+        check_fields = [
+            1 for field in fields if field.indicator1 == " " and field.indicator2 == " "
+        ]
         if sum(check_fields) == len(fields):
             replace_246 = True
-            
-    
+
     if replace_246:
-        fix_record.remove_fields('246')
+        fix_record.remove_fields("246")
         replace_list.append(alt_title)
 
     # Update fields from parent record
@@ -69,22 +138,24 @@ def big_bang_replace(many_record, parent_record):
                 elif count > 1 and item not in notRepeatable:
                     in_parent.append(item)
     except Exception as e:
-        print(f"Error setting up list of present fields in parent for big bang replace: {e}")
-    try: # remove records
+        print(
+            f"Error setting up list of present fields in parent for big bang replace: {e}"
+        )
+    try:  # remove records
         for item in in_parent:
-            if item.startswith('1'):
+            if item.startswith("1"):
                 for tag in onexx:
                     fix_record.remove_fields(tag)
-            if item.startswith('2'):
+            if item.startswith("2"):
                 for tag in pub_year:
                     fix_record.remove_fields(tag)
-            elif item.startswith('6'):
+            elif item.startswith("6"):
                 for tag in subjects:
                     fix_record.remove_fields(tag)
-            elif item.startswith('7'):
+            elif item.startswith("7"):
                 for tag in added_entries:
                     fix_record.remove_fields(tag)
-            elif item.startswith('8'):
+            elif item.startswith("8"):
                 for tag in series:
                     fix_record.remove_fields(tag)
     except Exception as e:
@@ -97,16 +168,17 @@ def big_bang_replace(many_record, parent_record):
         print(f"Error adding fields to many record {e}")
     return fix_record
 
+
 def get_parent_id(pymarc_record):
     """Get parent mms id from 950 $p
-        Input: record
-        Processing: 
-            Checks if 950$p in record.
-            Checks that value is a valid id.
-        Output: Value or "Not present"
+    Input: record
+    Processing:
+        Checks if 950$p in record.
+        Checks that value is a valid id.
+    Output: Value or "Not present"
     """
     try:
-        id = pymarc_record['950']['p']
+        id = pymarc_record["950"]["p"]
     except KeyError:
         return None
     if validate_mmsid(id):
@@ -115,19 +187,22 @@ def get_parent_id(pymarc_record):
         logger.debug(f"Invalid MMS id: {id}")
         return None
 
-def iterate_get_parents(filepath_list, parent_only=False): #also get child MMS Id and append as a tuple.
-    """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
-        Args: 
-            filepath_list (list) : .mrc or .xml filepath list from get_callable_files.
-            parent_only (bool) : Default to False. Set to True to return only parent ids as list.
 
-        Processing: Loads records with Pymarc. 
-            Gets 001
-            Gets the parent MMS ID if present.
-            Adds values to a dictionary with MMS Id of record as key.
-        Output: Dictionary with a index: [id, parent_id]
+def iterate_get_parents(
+    filepath_list, parent_only=False
+):  # also get child MMS Id and append as a tuple.
+    """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
+    Args:
+        filepath_list (list) : .mrc or .xml filepath list from get_callable_files.
+        parent_only (bool) : Default to False. Set to True to return only parent ids as list.
+
+    Processing: Loads records with Pymarc.
+        Gets 001
+        Gets the parent MMS ID if present.
+        Adds values to a dictionary with MMS Id of record as key.
+    Output: Dictionary with a index: [id, parent_id]
     """
-    
+
     if filepath_list == None or len(filepath_list) == 0:
         logger.info("Iterate get parents failed as filepath list is empty.")
         return None
@@ -139,54 +214,59 @@ def iterate_get_parents(filepath_list, parent_only=False): #also get child MMS I
             parent_id_list = []
             parent_id_dict = {}
             for file in filepath_list:
-                with open(file, 'rb') as fh:
+                with open(file, "rb") as fh:
                     reader = pymarc.MARCReader(fh)
                     for record in reader:
                         try:
-                            if record['956']['b'] == "MANY":
-                                id = record['001'].value()
+                            if record["956"]["b"] == "MANY":
+                                id = record["001"].value()
                                 parent_id = get_parent_id(record)
                                 logger.debug(f"Record id: {id}, parent_id {parent_id}")
                                 if parent_id is not None:
                                     parent_id_list.append(parent_id)
-                                    parent_id_dict.update({index:[id, parent_id]})
+                                    parent_id_dict.update({index: [id, parent_id]})
                                     index += 1
-                                else: # checks record is not a Parent and if so 
-                                    logger.info(f"Missing parent id: Many record {id} did not contain Parent id in 950$p")
-                                    records_without_parents=True
+                                else:  # checks record is not a Parent and if so
+                                    logger.info(
+                                        f"Missing parent id: Many record {id} did not contain Parent id in 950$p"
+                                    )
+                                    records_without_parents = True
                             else:
-                                logger.info(f"Not MANY record: Record {record['001'].value()} is not a MANY record.")
+                                logger.info(
+                                    f"Not MANY record: Record {record['001'].value()} is not a MANY record."
+                                )
                         except KeyError:
                             logger.info(f"No 956$b: Record {id} did not contain 956$b")
-                            records_without_parents=True
+                            records_without_parents = True
         except Exception as e:
             logger.error(f"Error reading marc from iterating parent ids: {e}")
     elif filepath_list[0].endswith(".xml"):
         try:
             parent_id_dict = {}
             for file in filepath_list:
-                records = pymarc.parse_xml_to_array(file) 
+                records = pymarc.parse_xml_to_array(file)
                 for record in records:
-                    id = record['001'].value()
+                    id = record["001"].value()
                     parent_id = get_parent_id(record)
                     if parent_id is not None:
-                        parent_id_dict.update({index : [id, parent_id]})
+                        parent_id_dict.update({index: [id, parent_id]})
                         index += 1
         except Exception as e:
-            logger.error(f"Error iterating parent ids: {e} " 
-                    +" 950 $p may be invalid or not present in some records.")
+            logger.error(
+                f"Error iterating parent ids: {e} "
+                + " 950 $p may be invalid or not present in some records."
+            )
     else:
         print("No valid files supplied. Files must be .mrc or .xml.")
         logger.error("No valid files supplied. Files must be .mrc or .xml.")
-    if (records_without_parents):
-        print("Processing completed with exceptions. Some files did not contain parents. See logfile for a list of MMS Ids.")
-    if (parent_only):
+    if records_without_parents:
+        print(
+            "Processing completed with exceptions. Some files did not contain parents. See logfile for a list of MMS Ids."
+        )
+    if parent_only:
         return parent_id_list
     else:
         return parent_id_dict
-
-
-
 
 
 def format_ids_for_api(id_list):
@@ -199,11 +279,7 @@ def format_ids_for_api(id_list):
         string = ",".join(id_list)
         return string
     except Exception as e:
-       logger.error(f"Error adding items to string: {e}")
-
-
-
-
+        logger.error(f"Error adding items to string: {e}")
 
 
 def write_ids_to_list(id_string, output_directory, filename):
@@ -245,7 +321,6 @@ Input: Source directory containing XML records
 Processing: iterate_get_parents and format_ids_for_api
 Output: String containing mms ids separated by commas.
 """
-
 
 
 def parent_ids_to_string(source_directory):

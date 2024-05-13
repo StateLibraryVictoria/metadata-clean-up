@@ -7,10 +7,8 @@ import re
 import dateparser
 import dateutil.parser
 from datetime import datetime
-from src.logger_config import *
 
-logger = logging.getLogger(__name__)
-debug_log_config("log_file")
+logger = logging.getLogger()
 
 
 def get_fields_from_source(source_record, field):
