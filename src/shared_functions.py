@@ -64,7 +64,7 @@ def clear_temporary_files():
                     try:
                         os.remove(item)
                         count += 1
-                        logger.info(f"Removed {item}")
+                        logger.debug(f"Removed {item}")
                     except Exception as e:
                         print(f"Error removing files: {e}")
         print(f"Removed {count} files from {local_path}")
