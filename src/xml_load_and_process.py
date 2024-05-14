@@ -534,12 +534,15 @@ def get_current_008_date(input):
         raise ValueError("Invalid 008 - length is not 40 characters")
 
     # Check date substring is position 6-14
-    substring = r"[a-z]\d\d\d[\du][\d#\\ ]{4}"
+    substring = r"[a-z]\d\d\d[\du]...."
     current = re.findall(substring, input)
-    if current[0] != input[6:15]:
-        logger.error("Date position 06-14 is not correctly aligned.")
-        raise ValueError("Date position 06-14 is not correctly aligned.")
-
+    try:
+        if current[0] != input[6:15]:
+            logger.error("Date position 06-14 is not correctly aligned.")
+            raise ValueError("Date position 06-14 is not correctly aligned.")
+    except IndexError as e:
+        logger.error(f"Unable to pattern match date in 008: {e}")
+        return None
     return input[6:15]
 
 
@@ -600,15 +603,22 @@ def replace_many_008_date(record):
                     )
                 else:
                     date_string = field.get("c")
+            else:
+                logger.info(f"Record missing 26x $c: {record['001'].value()}")
         if date_string is not None:
             new_008 = parse_008_date(date_string)
+            if new_008 == None:
+                logger.info(
+                    f"Unable to parse current 008 from record. Probably invalid for record {record['001'].value()} with 008: {record['008'].value()}. 008 will not be replaced."
+                )
+                return record
             if len(current_008[6:15]) == len(new_008):
                 current_008 = str.replace(current_008, current_008[6:15], new_008)
                 record.remove_fields("008")
                 field_008 = pymarc.Field(tag="008", data=current_008)
                 record.add_ordered_field(field_008)
-    except ValueError:
+    except ValueError as e:
         logger.error(
-            f"Invalid 008 in record {record['001'].value()}. 008 will not be replaced."
+            f"Invalid 008 in record {record['001'].value()}. 008 will not be replaced. Error: {e}"
         )
     return record
