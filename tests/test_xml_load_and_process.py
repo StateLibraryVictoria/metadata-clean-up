@@ -363,14 +363,25 @@ def test_enumerate_037(input, expected):
     assert output == expected
 
 
-def test_get_current_008_date():
-    date = get_current_008_date("240221s1975    vrannn        o   kneng d")
-    assert date == "s1975    "
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        ("240221s1975    vrannn        o   kneng d", "s1975    "),
+        ("150216m19061910xx c   gr         0d    c", "m19061910"),
+        ("221125i1906####xx#nnn########o###knzxx#d", "i1906####"),
+        ("221125s1954    xx#nnn########o###knzxx#d", "s1954    "),
+        ("221125scirca 197    n########o###knzxx#d", None),
+        ("221125i1921####xx#nnn########o###knzxx#d", "i1921####"),
+    ],
+)
+def test_get_current_008_date(input, expected):
+    date = get_current_008_date(input)
+    assert date == expected
 
 
 def test_get_current_008_date_raises_wrong_length():
     with pytest.raises(ValueError):
-        get_current_008_date("240221s1975    vrannn        o   kneng ")
+        get_current_008_date("020419i19211923xx nnn g knzxx d")
 
 
 def test_get_current_008_date_raises_wrong_alignment():
@@ -394,6 +405,7 @@ def test_get_current_008_date_raises_wrong_alignment():
         ("[Jan. 1, 1970]", "e19700101"),
         ("10 January 1974 ", "e19740110"),
         ("Jan. 1970", "e197001  "),
+        # ("[1921-23]", "q19211923"),
     ],
 )
 def test_parse_008_date(input, expected):
