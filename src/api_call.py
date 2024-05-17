@@ -83,9 +83,11 @@ def chunk_identifiers(id_list):
     return request_dict
 
 
-def check_api_key():
+def check_api_key(key=None):
     """Makes a test call to the API and returns a boolean."""
-    headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
+    if key == None:
+        key = KEY
+    headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
     response = requests.get(BASEURL + "test", headers=headers)
     logger.debug(response)
     if response.status_code == 200:
@@ -97,7 +99,7 @@ def check_api_key():
         return False
 
 
-def get_bibs(part, mms_ids):
+def get_bibs(part, mms_ids, key=None):
     """Query API for bibliographic records. Assumes mutliple calls will be passed.
 
     Args:
@@ -107,6 +109,8 @@ def get_bibs(part, mms_ids):
     Returns:
         Api response (JSON)
     """
+    if key == None:
+        key = KEY
     headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
     query = {"mms_id": mms_ids}
     api_call = requests.get(BASEURL, params=query, headers=headers)
