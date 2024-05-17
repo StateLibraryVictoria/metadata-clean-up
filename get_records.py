@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import time
 from copy import deepcopy
-from sys import exit
+import sys
 from src.shared_functions import *
 from src.xml_load_and_process import *
 from src.get_parent_ids import *
@@ -29,6 +29,12 @@ if downloaded_records:
     print("Not clearing directory, working with downloaded records.")
     logger.info("Working with existing files.")
 else:
+    print("This process will clear downloaded content. Continue? (y/n)")
+    response = input()
+    if not response.lower().startswith("y"):
+        print("Ending program.")
+        logger.info("User ended program.")
+        sys.exit()
     clear_temporary_files()
 
 """Load variables"""
@@ -46,14 +52,14 @@ if not os.path.exists(load_dir):
     print(
         "Load directory does not exist. Create directory in /input/load/basic and place load file."
     )
-    sys.exit
+    sys.exit()
 
 """Load file"""
 file_list = os.listdir(load_dir)
 
 if len(file_list) == 0:
     print("No files in load directory. Stage file and try again.")
-    sys.exit
+    sys.exit()
 
 print("\n===CHECKING STAGED FILES===\n")
 
@@ -66,7 +72,7 @@ response = input()
 if not response.lower().startswith("y"):
     print("Ending program.")
     logger.info("User ended program.")
-    sys.exit
+    sys.exit()
 print("")
 
 """Get ids from file"""
