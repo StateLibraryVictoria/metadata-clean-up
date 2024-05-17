@@ -10,6 +10,24 @@ from src.transform_marc_file import *
 logger = logging.getLogger()
 
 
+def setup_logger(
+    name,
+    log_file,
+    formatter=logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"),
+    level=logging.INFO,
+):
+    """Generates multiple loggers for a single script"""
+
+    handler = logging.FileHandler(log_file, encoding="utf-8")
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger
+
+
 def setup_directories():
     """Initialises directories"""
     log_path = os.path.join("logs")
@@ -127,7 +145,7 @@ def split_marc_records(input_filename):
     return identifiers
 
 
-def get_missing_records(existing_records, request_ids, output_directory):
+def get_missing_records(existing_records, request_ids, output_directory, apikey=None):
     """Call API process to add missing parent records to existing file.
 
     Args:
@@ -141,6 +159,10 @@ def get_missing_records(existing_records, request_ids, output_directory):
     """
     logger.debug(f"Number of existing records: {len(existing_records)}")
     logger.debug(f"Number of request ids: {len(request_ids)}")
+
+    if apikey == None:
+        apikey = KEY
+
     # Check what identifiers need to be retrieved.
     missing_list = []
     for identifier in request_ids:
@@ -155,7 +177,7 @@ def get_missing_records(existing_records, request_ids, output_directory):
     xml = "<collection>"  # Wraps xml in root element collection
     if check_api_key():
         for key in required:
-            response = get_bibs(key, required[key])
+            response = get_bibs(key, required[key], apikey)
             string = get_json_string(response)
             bibs = json.loads(string)
             for item in bibs["bib"]:
