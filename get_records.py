@@ -1,13 +1,8 @@
 import os
 import re
-import pandas as pd
 import time
-from copy import deepcopy
 import sys
 from src.shared_functions import *
-from src.xml_load_and_process import *
-from src.get_parent_ids import *
-from src.transform_marc_file import *
 from src.api_call import *
 
 """Set up logging"""
