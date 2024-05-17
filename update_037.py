@@ -1,4 +1,5 @@
 import os
+import re
 from copy import deepcopy
 from sys import exit
 from src.shared_functions import *
@@ -7,14 +8,30 @@ from src.get_parent_ids import *
 from src.transform_marc_file import *
 from src.api_call import *
 
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    filename=path.join("logs", "".join(("update_037.log"))),
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+
+def setup_logger(name, log_file, level=logging.INFO):
+    """To setup as many loggers as you want"""
+
+    handler = logging.FileHandler(log_file, encoding="utf-8")
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger
+
+
+def normalise_title(input):
+    input = input.lower()
+    output = re.sub("\W", "", input)
+    return output
+
+
+logger = setup_logger("primary_logger", "logs/update_037.log")
+logger_2 = setup_logger("name_collision_logger", "logs/name_mismatch_950l.log")
 
 # Debugging flag - set to True to work with existing records or False to start from scratch.
 downloaded_records = False
@@ -38,7 +55,7 @@ else:
     clear_temporary_files()
 
 # Load identifiers and accession numbers from spreadsheet
-filename = "Task_6_cleanup_batch_1_unique_root_1448.xlsx"
+filename = "filename.xlsx"
 logger.info("Processing file: " + filename)
 location = os.path.join(ROOT_DIR, "input", "load", "excel", filename)
 df = get_identifiers_from_spreadsheet(location)
@@ -125,6 +142,7 @@ exceptions = 0  # unsuccessful matches
 list_not_match = []
 list_has_037 = []
 match_parent = False
+list_already_present = []
 
 # Iterates through rows in dataframe to process files
 for index, row in df_join.iterrows():
@@ -134,6 +152,11 @@ for index, row in df_join.iterrows():
             p_reader = pymarc.MARCReader(pf)
             for record in p_reader:
                 parent_rec = deepcopy(record)
+                # Gets parent title
+                try:
+                    p_title = normalise_title(parent_rec["245"]["a"])
+                except Exception as e:
+                    p_title = None
                 # Gets matching accession number from parent record or returns None
                 new_label = subfield_is_in_record(record, row["file_label"], "037", "a")
                 if new_label is not None:
@@ -165,9 +188,29 @@ for index, row in df_join.iterrows():
                     fix_record = fix_indicators(fix_record)
                     fix_record = fix_655_gmgpc(fix_record)
                     try:
+                        title_950l = normalise_title(fix_record["950"]["l"])
+                    except Exception as e:
+                        title_950l = None
+                    if p_title is not None and title_950l is not None:
+                        if p_title != title_950l:
+                            logger_2.info(
+                                f"Normalised title comparison failed between: {p_title} and {title_950l} for record {record['001'].value()}"
+                            )
+                    elif title_950l is None:
+                        logger_2.info(
+                            f"950$l not in Many record {record['001'].value()}"
+                        )
+                    try:
                         # Check for existing 037 and add exception if it exists.
                         if len(record.get_fields("037")) > 0:
                             for identifier in record.get_fields("037"):
+                                if identifier.get("a") == row["file_label"]:
+                                    list_already_present.append(
+                                        (row["mms_id"], row["file_label"], identifier)
+                                    )
+                                    with open(valid_output, "ab") as output:
+                                        output.write(fix_record.as_marc())
+                                    continue
                                 list_has_037.append(
                                     (row["mms_id"], row["file_label"], identifier)
                                 )
@@ -221,6 +264,19 @@ for index, row in df_join.iterrows():
                 )
                 reader = pymarc.MARCReader(fh)
                 for record in reader:
+                    try:
+                        title_950l = normalise_title(fix_record["950"]["l"])
+                    except Exception as e:
+                        title_950l = None
+                    if p_title is not None and title_950l is not None:
+                        if p_title != title_950l:
+                            logger_2.info(
+                                f"Normalised title comparison failed between: {p_title} and {title_950l} for record {record['001'].value()}"
+                            )
+                    elif title_950l is None:
+                        logger_2.info(
+                            f"950$l not in Many record {record['001'].value()}"
+                        )
                     fix_record = deepcopy(record)
                     # Cleanup record to replace common fields, fix indicator encoding, etc.
                     fix_record = big_bang_replace(fix_record, parent_rec)
@@ -268,6 +324,15 @@ for id, acc, exi in list_has_037:
     )
     logger.info(
         f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}"
+    )
+print(
+    "Existing correct 037: "
+    + str(len(list_already_present))
+    + " records already had correct 037 in record."
+)
+for id, acc, exi in list_already_present:
+    logger.info(
+        f"Existing 037 matched record {id} -- Current 037: {exi} -- File label: {acc}"
     )
 
 # Validate and return how many records failed.
