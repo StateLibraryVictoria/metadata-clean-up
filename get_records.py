@@ -33,7 +33,7 @@ else:
     clear_temporary_files()
 
 """Load variables"""
-KEY = os.getenv("KEY")
+KEY = os.getenv("PROD_KEY")
 
 output_many = os.path.join("output", "mrc", "split", "many")
 output_parent = os.path.join("output", "mrc", "split", "parent")
@@ -106,9 +106,9 @@ print(f"Final list has {len(identifiers)} items\n")
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key():
+    if check_api_key(KEY):
         try:
-            get_missing_records([], identifiers, output_many)
+            get_missing_records([], identifiers, output_many, KEY)
         except Exception as e:
             print(f"Error retrieving bibs: {e}")
             logger.error(f"Error retrieving bibs: {e}")
