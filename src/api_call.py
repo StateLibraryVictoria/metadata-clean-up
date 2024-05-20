@@ -86,7 +86,7 @@ def chunk_identifiers(id_list):
 def check_api_key(key=None):
     """Makes a test call to the API and returns a boolean."""
     if key == None:
-        key = KEY
+        key = key
     headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
     response = requests.get(BASEURL + "test", headers=headers)
     logger.debug(response)
@@ -110,8 +110,8 @@ def get_bibs(part, mms_ids, key=None):
         Api response (JSON)
     """
     if key == None:
-        key = KEY
-    headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
+        key = key
+    headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
     query = {"mms_id": mms_ids}
     api_call = requests.get(BASEURL, params=query, headers=headers)
     logger.debug(f"API GET request sent. Batch number {part}")
@@ -164,7 +164,6 @@ MMS_ID = os.getenv("MMS_ID")
 ## Must be a list of ids separated by commas.
 MMS_IDS = os.getenv("MMS_IDS")
 # Alma API key
-KEY = os.getenv("KEY")
 logger.debug("Loaded environment variables")
 
 # Local variables
