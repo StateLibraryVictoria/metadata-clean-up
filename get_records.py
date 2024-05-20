@@ -9,7 +9,7 @@ from src.api_call import *
 
 timestr = time.strftime("%Y%m%d-%H%M%S")
 logger_name = f"logs/get_records{timestr}.log"
-logger = setup_logger("primary_logger", logger_name)
+logger = setup_logger(name=None, log_file=logger_name)
 print("Created log file with title: " + logger_name)
 print("")
 
