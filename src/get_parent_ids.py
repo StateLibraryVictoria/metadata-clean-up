@@ -191,7 +191,7 @@ def get_parent_id(pymarc_record):
 def iterate_get_parents(
     filepath_list, parent_only=False
 ):  # also get child MMS Id and append as a tuple.
-    """Get a dictionary of index : [id, parent ids (950$p)] from records in filepath location.
+    """Get a dictionary or list of ids. parents_only=True will return a list of parent ids. Otherwise returns a dictionary with {key: (MANY, PARENT)}
     Args:
         filepath_list (list) : .mrc or .xml filepath list from get_callable_files.
         parent_only (bool) : Default to False. Set to True to return only parent ids as list.
