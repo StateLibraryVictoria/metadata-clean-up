@@ -145,7 +145,7 @@ def split_marc_records(input_filename):
     return identifiers
 
 
-def get_missing_records(existing_records, request_ids, output_directory, apikey=None):
+def get_missing_records(existing_records, request_ids, output_directory, apikey):
     """Call API process to add missing parent records to existing file.
 
     Args:
@@ -161,7 +161,8 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey=
     logger.debug(f"Number of request ids: {len(request_ids)}")
 
     if apikey == None:
-        apikey = KEY
+        logger.info("No API Key submitted")
+        return None
 
     # Check what identifiers need to be retrieved.
     missing_list = []
@@ -175,7 +176,7 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey=
 
     required = chunk_identifiers(missing_list)
     xml = "<collection>"  # Wraps xml in root element collection
-    if check_api_key():
+    if check_api_key(apikey):
         for key in required:
             response = get_bibs(key, required[key], apikey)
             string = get_json_string(response)
@@ -207,7 +208,7 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey=
             mrc_out.write(record.as_marc())
 
 
-# Load records as datafrmae
+# Load records as dataframe
 def get_identifiers_from_spreadsheet(filename):
     """Loads a spreadsheet to dataframe from filename and sets mms id columns to
     have prefix mms_id.
@@ -290,7 +291,7 @@ def output_file_with_validation(
     output_filename (str) - output filename. If this is not set, will prompt user for
                     input in terminal.
     merged (bool) - Default to False which runs merge processing, but can be
-                    set to True to run on files that have alreay been merged
+                    set to True to run on files that have already been merged
 
     Processing:
     Adds '.mrc' extension to filename if not already present.
@@ -328,4 +329,4 @@ def output_file_with_validation(
         validation_filename = merge_output.replace(".mrc", "_validation.txt")
         validate_mrc_record(merge_output, validation_filename)
     except Exception as e:
-        print(f"Validation of merged records faild: {e}")
+        print(f"Validation of merged records failed: {e}")
