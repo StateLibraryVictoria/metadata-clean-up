@@ -194,7 +194,9 @@ def fix_655_gmgpc(record):
             )  # strips out trailing punctuation/whitespace in $2
             value = field["a"] if field["2"] == "gmgpc" else ""
 
-            if not value.endswith("."):  # adds final period to gmgpc if required.
+            if (
+                not value.endswith(".") and "gmgpc" in field["2"]
+            ):  # adds final period to gmgpc if required.
                 field["a"] = value + "."
 
     return record
@@ -536,14 +538,16 @@ def get_current_008_date(input):
     # Check date substring is position 6-14
     substring = r"[a-z]\d\d\d[\du]...."
     current = re.findall(substring, input)
-    try:
-        if current[0] != input[6:15]:
-            logger.error("Date position 06-14 is not correctly aligned.")
-            raise ValueError("Date position 06-14 is not correctly aligned.")
-    except IndexError as e:
-        logger.error(f"Unable to pattern match date in 008: {e}")
+    if len(current) == 0:
+        logger.error(
+            f"Unable to pattern match date in 008 for input {input} using substring {substring}."
+        )
         return None
-    return input[6:15]
+    elif current[0] != input[6:15]:
+        logger.error("Date position 06-14 is not correctly aligned.")
+        raise ValueError("Date position 06-14 is not correctly aligned.")
+    else:
+        return input[6:15]
 
 
 def parse_008_date(input):
