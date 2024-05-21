@@ -330,3 +330,53 @@ def output_file_with_validation(
         validate_mrc_record(merge_output, validation_filename)
     except Exception as e:
         print(f"Validation of merged records failed: {e}")
+
+
+def list_files(directory):
+    file_list = os.listdir(directory)
+
+    if len(file_list) == 0:
+        print("No files in load directory. Stage file and try again.")
+        sys.exit()
+
+    print("\n===CHECKING STAGED FILES===\n")
+
+    for file in file_list:
+        print("Staged file found: " + file)
+        logger.info("Staged file: " + file)
+
+    print("Do you wish to process all files? y/n")
+    response = input()
+    if not response.lower().startswith("y"):
+        print("Ending program. Please re-stage files and resubmit.")
+        logger.info("User ended program.")
+        sys.exit()
+    print("")
+    return file_list
+
+
+def get_ids_from_file(directory, file_list):
+    """Get ids from file"""
+    id_list = []
+    for file in file_list:
+        if ".xls" in file:
+            data = get_identifiers_from_spreadsheet(os.path.join(directory, file))
+            for column in data.columns:
+                if column.startswith("mms_id"):
+                    ids = data[column].to_list()
+                    id_list.extend(ids)
+                    print(
+                        f"MMS_ids found: {len(ids)} ids added to list from file {file}."
+                    )
+                    logger.info(
+                        f"MMS_ids found: {len(ids)} ids added to list from file {file}."
+                    )
+        else:
+            with open(os.path.join(directory, file), "r") as f:
+                ids = re.findall("99\d+7636", f.read())
+                id_list.extend(ids)
+                print(f"MMS_ids found: {len(ids)} ids added to list from file {file}.")
+                logger.info(
+                    f"MMS_ids found: {len(ids)} ids added to list from file {file}."
+                )
+    return id_list
