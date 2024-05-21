@@ -268,7 +268,7 @@ def get_nonfiling_characters(string):
     # \W catches anything that returns False for str.isalnum()
     # Unicode characters in other scripts inherit the Alphabetic property
     # and return True if Alphabetic.
-    nonfiling = r"^(\W?)(the |an |a |le |l')?\s*"
+    nonfiling = r"^(\W*the |\W*an |\W*a |\W*le |\W*l')?\s*"
     query = re.search(nonfiling, string.lower())
     return query.group()
 

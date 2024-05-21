@@ -267,6 +267,8 @@ def test_set_245_ind1_to_1(field_replace_record):
         ("The title", 4),
         ("[the title", 5),
         ("L'title", 2),
+        ('"title"', 0),
+        ("[title]", 0),
         ("xyz", 0),
         ("123", 0),
         ("青春無期徒刑", 0),
