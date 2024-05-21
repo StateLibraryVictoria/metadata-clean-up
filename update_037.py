@@ -38,6 +38,7 @@ downloaded_records = False
 
 # Setup workspace
 setup_directories()
+KEY = os.getenv("PROD_KEY")
 ROOT_DIR = os.path.abspath(os.curdir)
 
 # Set directories
@@ -55,7 +56,8 @@ else:
     clear_temporary_files()
 
 # Load identifiers and accession numbers from spreadsheet
-filename = "filename.xlsx"
+files = list_files(os.path.join(ROOT_DIR, "input", "load", "excel"))
+filename = files[0]
 logger.info("Processing file: " + filename)
 location = os.path.join(ROOT_DIR, "input", "load", "excel", filename)
 df = get_identifiers_from_spreadsheet(location)
@@ -73,9 +75,9 @@ for head in headers:
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key():
+    if check_api_key(KEY):
         try:
-            get_missing_records([], identifiers, output_dir_many)
+            get_missing_records([], identifiers, output_dir_many, KEY)
         except Exception as e:
             print(f"Error retrieving bibs: {e}")
             logger.error(f"Error retrieving bibs: {e}")
@@ -99,9 +101,9 @@ unique_parents = parent_df.parent_id.unique().tolist()
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key():
+    if check_api_key(KEY):
         try:
-            get_missing_records([], unique_parents, output_dir_parent)
+            get_missing_records([], unique_parents, output_dir_parent, KEY)
         except Exception as e:
             print(f"Error retrieving bibs: {e}")
             logger.error(f"Error retrieving bibs: {e}")
