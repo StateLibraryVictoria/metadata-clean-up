@@ -49,7 +49,7 @@ def test_chunk_identifiers(mms_ids, chunked):
         ("9938164143607636", True),
         ("997636", False),
         ("not an mms id", False),
-        ("99alsonot", False),
+        ("99also_not", False),
         ("999912376367636", False),
         ("999912347636", True),
     ],
