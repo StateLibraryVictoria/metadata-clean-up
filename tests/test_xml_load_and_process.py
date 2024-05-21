@@ -372,6 +372,7 @@ def test_enumerate_037(input, expected):
         ("221125s1954    xx#nnn########o###knzxx#d", "s1954    "),
         ("221125scirca 197    n########o###knzxx#d", None),
         ("221125i1921####xx#nnn########o###knzxx#d", "i1921####"),
+        ("221125i1920####xx#nnn########o###knzxx#d", "i1920####"),
     ],
 )
 def test_get_current_008_date(input, expected):
@@ -405,6 +406,7 @@ def test_get_current_008_date_raises_wrong_alignment():
         ("[Jan. 1, 1970]", "e19700101"),
         ("10 January 1974 ", "e19740110"),
         ("Jan. 1970", "e197001  "),
+        ("[ca. 1920 - ca. 1954].", "q19201954"),
         # ("[1921-23]", "q19211923"),
     ],
 )
