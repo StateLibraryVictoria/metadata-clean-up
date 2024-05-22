@@ -87,13 +87,15 @@ def chunk_identifiers(id_list):
 
 BASEURL = "https://api-ap.hosted.exlibrisgroup.com/almaws/v1/bibs/"
 
+KEY = os.getenv("KEY", None)
 
-def check_api_key(key):
+
+def check_api_key():
     """Makes a test call to the API and returns a boolean."""
-    if key == None:
+    if KEY == None:
         logger.info("Check API Key: Key not configured in API call.")
-        return key
-    headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
+        return None
+    headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
     response = requests.get(BASEURL + "test", headers=headers)
     logger.info(response)
     if response.status_code == 200:
@@ -105,7 +107,7 @@ def check_api_key(key):
         return False
 
 
-def get_bibs(part, mms_ids, key):
+def get_bibs(part, mms_ids):
     """Query API for bibliographic records. Assumes mutliple calls will be passed.
 
     Args:
@@ -115,10 +117,10 @@ def get_bibs(part, mms_ids, key):
     Returns:
         Api response (JSON)
     """
-    if key == None:
+    if KEY == None:
         logger.info("Get bibs: Key not configured in API call.")
         return None
-    headers = {"Authorization": "apikey " + key, "Accept": "application/json"}
+    headers = {"Authorization": "apikey " + KEY, "Accept": "application/json"}
     query = {"mms_id": mms_ids}
     api_call = requests.get(BASEURL, params=query, headers=headers)
     logger.debug(f"API GET request sent. Batch number {part}")
