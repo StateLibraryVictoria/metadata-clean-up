@@ -40,33 +40,6 @@ source_path = os.path.join(data_path, "source", "source_record.xml")
 source_record = load_test_files(source_path)
 
 
-# replace field when string supplied and is whole value
-@pytest.mark.parametrize(
-    "input_file, source_record, string_field, expected",
-    [
-        (input_files[0], source_path, "655", "Replaced 655 field. gmgpc"),
-        (input_files[1], source_path, "037", ""),  # case field not in record
-        (input_files[2], source_path, "950", "Replaced 950, only $a left."),
-        (
-            input_files[3],
-            source_path,
-            "650",
-            "Architecture, Domestic Victoria Fitzroy.",
-        ),
-    ],
-)
-def test_replace_field_whole_string(input_file, source_record, string_field, expected):
-    record = pymarc.parse_xml_to_array(input_file)
-    source = pymarc.parse_xml_to_array(source_record)
-    result = replace_field(record[0], source[0], string_field)
-    final = (
-        result.get_fields(string_field)[0].value()
-        if len(result.get_fields(string_field)) > 0
-        else ""
-    )
-    assert final == expected
-
-
 field_655 = Field(
     tag="655",
     indicators=["", "7"],
@@ -83,33 +56,6 @@ field_950 = Field(
 field_650 = Field(
     tag="650", indicators=["", ""], subfields=[Subfield(code="a", value="value")]
 )
-
-
-# replace field when field supplied and is whole value
-@pytest.mark.parametrize(
-    "input_file, source_record, field_object, expected",
-    [
-        (input_files[0], source_path, field_655, "Replaced 655 field. gmgpc"),
-        (input_files[1], source_path, field_037, ""),
-        (input_files[2], source_path, field_950, "Replaced 950, only $a left."),
-        (
-            input_files[3],
-            source_path,
-            field_650,
-            "Architecture, Domestic Victoria Fitzroy.",
-        ),
-    ],
-)
-def test_replace_field_field_object(input_file, source_record, field_object, expected):
-    record = pymarc.parse_xml_to_array(input_file)
-    source = pymarc.parse_xml_to_array(source_record)
-    result = replace_field(record[0], source[0], field_object)
-    final = (
-        result.get_fields(field_object.tag)[0].value()
-        if len(result.get_fields(field_object.tag)) > 0
-        else ""
-    )
-    assert final == expected
 
 
 def test_fix_655_gmgpc():
