@@ -117,8 +117,14 @@ def split_marc_records(input_filename):
             'parent_records': records identified as Parent records.
             'many_records': records not identified as Parent records.
             'parent_ids': Identifiers for parent records found in 950$p of many record.
+            'parent_many_dict': parent ids as keys for many records matching the same record.
     """
-    identifiers = {"parent_records": [], "many_records": [], "parent_ids": []}
+    identifiers = {
+        "parent_records": [],
+        "many_records": [],
+        "parent_ids": [],
+        "parent_many_dict": {},
+    }
     with open(input_filename, "rb") as fh:
         reader = pymarc.MARCReader(fh)  # creates
         for record in reader:
@@ -132,7 +138,17 @@ def split_marc_records(input_filename):
                 identifiers["many_records"].append(id)
                 field_950 = record.get_fields("950")
                 if len(field_950) > 0:
+                    for field in field_950:
+                        if field.get("p") is not None:
+                            p_id = record["950"]["p"]
+                            existing_manys = identifiers["parent_many_dict"].get(p_id)
+                            if existing_manys is not None:
+                                new_list = existing_manys + [id]
+                                identifiers["parent_many_dict"].update({p_id: new_list})
+                            else:
+                                identifiers["parent_many_dict"].update({p_id: [id]})
                     try:
+                        identifiers["parent_many_dict"].update({})
                         if record["950"]["p"] not in identifiers["parent_ids"]:
                             identifiers["parent_ids"].append(record["950"]["p"])
                     except KeyError:
@@ -142,6 +158,7 @@ def split_marc_records(input_filename):
                 )
             with open(output_file, "wb") as f:
                 f.write(record.as_marc())
+    print(identifiers["parent_many_dict"])
     return identifiers
 
 
