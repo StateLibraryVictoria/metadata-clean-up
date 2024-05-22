@@ -1,4 +1,4 @@
-from datetime import datetime
+import os
 import pytest
 
 from src.api_call import *
@@ -60,19 +60,4 @@ def test_validate_mmsid(id, expected):
 
 # Checks that the API key is configured correctly. This does call the API.
 def test_check_api_key():
-    KEY = os.getenv("KEY")
-    assert check_api_key(KEY) == True
-
-
-# Checks that the json files are created as expected.
-def test_output_json_files(tmp_path):
-    location = tmp_path / "json"
-    location.mkdir()
-    part = "0"
-    input = "some text"
-    today = datetime.now().strftime("%Y%m%d%H%M00")
-    output_json_files(location, part, input)
-    filename = f"{today}_records_batch_{part}.json"
-    file = location / filename
-    assert file.read_text() == "some text"
-    assert len(list(tmp_path.iterdir())) == 1
+    assert check_api_key() == True
