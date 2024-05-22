@@ -424,3 +424,33 @@ def test_replace_many_008_date(single_record):
     nr = replace_many_008_date(wr)
     new_008 = nr["008"].value()
     assert new_008 == "160406q19701974xx nnn g          knzxx d"
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        (
+            pymarc.Field(
+                "260",
+                indicators=["\\", "0"],
+                subfields=[pymarc.Subfield(code="c", value="[between 1920 and 1940?]")],
+            ),
+            "=264  \\0$c[between 1920 and 1940?]",
+        ),
+        (
+            pymarc.Field(
+                "245",
+                indicators=[" ", " "],
+                subfields=[
+                    pymarc.Subfield(code="a", value="Title :"),
+                    pymarc.Subfield(code="b", value="a short story."),
+                ],
+            ),
+            "=264  \\\\$aTitle :$ba short story.",
+        ),
+    ],
+)
+def test_replace_tag(input, expected):
+    test_field = replace_tag("264", input)
+    print(test_field.indicators)
+    assert str(test_field) == expected

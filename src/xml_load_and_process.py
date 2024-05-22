@@ -626,3 +626,22 @@ def replace_many_008_date(record):
             f"Invalid 008 in record {record['001'].value()}. 008 will not be replaced. Error: {e}"
         )
     return record
+
+
+def replace_tag(tag, field, indicator1=None, indicator2=None):
+    """Create a new field with the data from the existing field with the new tag.
+    Optionally pass indicators to set those as well.
+
+    Args:
+        tag (str) : three digit string indicating the MARC field, eg '100'
+        field (pymarc Field object) : Field containing source data.
+        indicator1 (str|None) : defaults to None to use existing indicators or submit a single digit string to set.
+        indicator2 (str|None) : as indicator1."""
+    if indicator1 == None:
+        indicator1 = field.indicator1
+    if indicator2 == None:
+        indicator2 = field.indicator2
+    new_field = pymarc.Field(
+        tag=tag, indicators=[indicator1, indicator2], subfields=field.subfields
+    )
+    return new_field
