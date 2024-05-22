@@ -21,7 +21,7 @@ def many_record_cleanup(many_record, parent_record):
         return many_record
     fix_record = deepcopy(many_record)
     fix_record = big_bang_replace(fix_record, parent_record)
-    fix_record = fix_245_indicators(fix_record)
+    fix_record = fix_indicators(fix_record)
     fix_record = fix_655_gmgpc(fix_record)
     return fix_record
 
