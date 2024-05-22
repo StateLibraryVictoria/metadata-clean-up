@@ -1,6 +1,7 @@
 import os
 import re
 import pymarc
+import json
 import pandas as pd
 from src.api_call import *
 from src.xml_load_and_process import *
@@ -196,7 +197,8 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey)
     if check_api_key(apikey):
         for key in required:
             response = get_bibs(key, required[key], apikey)
-            string = get_json_string(response)
+            data = response.json()
+            string = json.dumps(data, indent=4)
             bibs = json.loads(string)
             for item in bibs["bib"]:
                 for key in item:
