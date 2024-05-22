@@ -1,123 +1,177 @@
 import os
 from sys import exit
 from copy import deepcopy
+import time
 from src.shared_functions import *
 from src.xml_load_and_process import *
 from src.get_parent_ids import *
-from src.logger_config import *
 from src.transform_marc_file import *
 
 
-logger = logging.getLogger(__name__)
-debug_log_config("log_file")
-logger.info("==Process marc file log==")
+"""Set up logging"""
 
+# Make logging directory
+if not os.path.exists("logs"):
+    os.mkdir("logs")
+# Configure logging
+timestr = time.strftime("%Y%m%d-%H%M%S")
+logger_name = f"logs/process_marc_file_{timestr}.log"
+logger = setup_logger(name=None, log_file=logger_name)
+print("Created log file with title: " + logger_name)
+print("")
 
 # Setup workspace
 setup_directories()
 
+KEY = os.getenv("PROD_KEY")
 output_path = os.path.join("output", "mrc", "split")
 input_path = os.path.join("input", "load", "mrc")
 parent_records_path = os.path.join(output_path, "parent")
 many_records_path = os.path.join(output_path, "many")
+merge_path = os.path.join("output", "mrc", "merge")
+valid_output = os.path.join(merge_path, "updated_records.mrc")
+invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
 
+"""Determine if the user wants to call all ids, or process existing file"""
+start_fresh = False
+print(
+    "This process can be run with supplied records (calling only missing records) or on an older file of records by calling the ids from scratch."
+)
+print("Re-download records for all ids found? (y/n)")
+response = input()
+if response.lower().startswith("y"):
+    print("Process will download all identified records via the API.")
+    logger.info("Identifying and downloading all records.")
+    start_fresh = True
+else:
+    print("Process will only call missing Parent records.")
+    logger.info("Processing file with supplied records.")
+    print("Clearing up temporary files.")
+    clear_temporary_files()
 
 # Check only one file in input directory and process.
 for root, dir, files in os.walk(input_path):
     output_list = [os.path.join(input_path, file) for file in files]
     if len(output_list) == 0:
         print(
-            "No files in input directory. Add files to /input/load/mrc. " \
-                + "Ending program."
-        )
-        exit()
-    elif len(output_list) > 1:
-        print(
-            f"Too many files in input directry. Only stage one file. " \
-                + f"Directory contains {len(output_list)} files. Ending program."
+            "No files in input directory. Add files to /input/load/mrc. "
+            + "Ending program."
         )
         exit()
     else:
-        filename, extension = os.path.splitext(output_list[0])
-        if extension != ".mrc":
-            print(
-                "File in load directory does not have expected .mrc extension." \
-                    + " Ending program."
-            )
-            logger.warn(
-                f"Input directory contains {filename} with extension {extension}:" \
-                    + " restage a file with extension .mrc."
-            )
+        print("The following files have been found:")
+        for file in output_list:
+            print(file)
+        print(f"Continue processing? (y/n)")
+        response = input()
+        if not response.lower().startswith("y"):
             exit()
-        logger.info(f"Input directory contains {filename} with extension" + \
-                    f" {extension}.")
-        filepath = output_list[0]
 
-# split the file
-identifiers = split_marc_records(filepath)
-many_records = identifiers["many_records"]
-parent_records = identifiers["parent_records"]
-parent_ids = identifiers["parent_ids"]
+# split the files
+many_records = []
+parent_records = []
+parent_ids = []
+id_dictionary = {}
+for file in output_list:
+    identifiers = split_marc_records(file)
+    many_records.extend(identifiers["many_records"])
+    parent_records.extend(identifiers["parent_records"])
+    parent_ids.extend(identifiers["parent_ids"])
+    for key in identifiers["parent_many_dict"]:
+        if key in id_dictionary:
+            new_list = id_dictionary[key].extend(identifiers["parent_many_dict"][key])
+            id_dictionary.update({key: new_list})
+        else:
+            id_dictionary.update({key: identifiers["parent_many_dict"][key]})
 
-# sort the records before the request
+if start_fresh:
+    # clear directories
+    clear_temporary_files()
+
+    many_records = list(set(many_records))
+    many_records.sort()
+
+    parent_ids = parent_records + parent_ids
+
+    # Get many records
+    get_missing_records([], many_records, many_records_path, KEY)
+
+
+parent_ids = list(set(parent_ids))
 parent_ids.sort()
 
 # get required parents
-get_missing_records(parent_records, parent_ids, parent_records_path)
+get_missing_records(parent_records, parent_ids, parent_records_path, KEY)
+
+parent_files = [
+    os.path.join(parent_records_path, filename)
+    for filename in os.listdir(parent_records_path)
+]
+many_files = [
+    os.path.join(many_records_path, filename)
+    for filename in os.listdir(many_records_path)
+]
+
+## Basic cleanup loop.
+exceptions = []
+valid_file = ""
+
+for key in id_dictionary:
+    filename = f"record_{key}.mrc"
+    many_filenames = [f"record_{id}.mrc" for id in id_dictionary[key]]
+    with open(os.path.join(parent_records_path, filename), "rb") as pf:
+        p_reader = pymarc.MARCReader(pf)
+        for p_record in p_reader:
+            parent_rec = deepcopy(p_record)
+            for file in many_filenames:
+                with open(os.path.join(many_records_path, file), "rb") as mf:
+                    reader = pymarc.MARCReader(mf)
+                    for record in reader:
+                        wr = deepcopy(record)
+                        ## Now we have both our parent record open and our many record open.
+                        try:
+                            fix_record = big_bang_replace(wr, parent_rec)
+                            fix_record = fix_indicators(fix_record)
+                            fix_record = fix_655_gmgpc(fix_record)
+                            if len(fix_record.get_fields("260")) == 1:
+                                date_field = replace_tag(
+                                    "264",
+                                    fix_record["260"],
+                                    indicator1=" ",
+                                    indicator2="0",
+                                )
+                                fix_record.remove_fields("260")
+                                fix_record.add_ordered_field(date_field)
+                            with open(valid_output, "ab") as output:
+                                output.write(fix_record.as_marc())
+                        except Exception as e:
+                            print("Error occurred while transforming file: " + e)
+                            logger.error(f"Error occurred while transforming file: {e}")
+                            exceptions.append(fix_record["001"].value())
+                            with open(invalid_output, "ab") as output:
+                                output.write(fix_record.as_marc())
 
 
-def get_files_list(directory):
-    """Returns file paths for all files in specified directory"""
-    output_array = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            filename = os.path.join(directory, file)
-            output_array += [filename]
-    return output_array
+# Validate and return how many records failed.
+if os.path.isfile(valid_output):
+    valid_path, valid_name = os.path.split(valid_output)
+    output_file_with_validation(
+        valid_output, valid_path, output_filename=valid_name, merged=True
+    )
+else:
+    print("No valid records written to file.")
 
+# check file exists
+if os.path.isfile(invalid_output):
+    invalid_path, invalid_name = os.path.split(invalid_output)
+    output_file_with_validation(
+        invalid_output, invalid_path, output_filename=invalid_name, merged=True
+    )
+else:
+    print("No exceptions written to file.")
 
-# Get list of filenames.
-parent_files = []
-many_files = []
-parent_files = get_files_list(parent_records_path)
-many_files = get_files_list(many_records_path)
-
-# match records against parents and replace 100, 110, 260, 264, 7xx, 830.
-for file in many_files:
-    reader = pymarc.MARCReader(open(file, "rb"))
-    for record in reader:
-        current_record = deepcopy(record)
-    try:
-        parent_id = current_record["950"]["p"]
-    except:
-        print("No parent id found in record.")
-    for parent_file in parent_files:
-        if parent_file.endswith(f"record_{parent_id}.mrc"):
-            logger.info(f"Matched parent record: {parent_file}")
-            parent_reader = pymarc.MARCReader(open(parent_file, "rb"))
-            for record in parent_reader:
-                try:
-                    current_record = big_bang_replace(current_record, record)
-                except Exception as e:
-                    print(f"Big bang replace method failed. Error: {e}")
-                    logger.error(f"Big bang replace method failed. Error: {e}")
-                try:
-                    current_record = fix_indicators(current_record)
-                except Exception as e:
-                    print(f"Error replacing indicators. Error: {e}")
-                    logger.error(f"Error replacing indicators. Error: {e}")
-                try:
-                    current_record = fix_655_gmgpc(current_record)
-                except Exception as e:
-                    print(f"Error fixing 655 gmgpc subject headings. Error: {e}")
-                    logger.error(f"Error fixing 655 gmgpc subject headings. " \
-                                 + f"Error: {e}")
-    with open(file, "wb") as out:
-        try:
-            out.write(current_record.as_marc())
-        except Exception as e:
-            logger.error(f"Error writing record to file: {e}")
-
-# Write file to joined location.
-merge_path = os.path.join("output", "mrc", "merge")
-output_file_with_validation(many_records_path, merge_path)
+# Build archive file of unmodified MANY records.
+many_records_path
+output_file_with_validation(
+    many_records_path, merge_path, output_filename="unedited_many_backup.mrc"
+)
