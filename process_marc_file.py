@@ -20,6 +20,9 @@ logger = setup_logger(name=None, log_file=logger_name)
 print("Created log file with title: " + logger_name)
 print("")
 
+# Debugging flag - set to True to work with existing records or False to start from scratch.
+downloaded_records = False
+
 # Setup workspace
 setup_directories()
 
@@ -34,23 +37,26 @@ many_records_path = os.path.join(output_path, "many")
 merge_path = os.path.join("output", "mrc", "merge")
 valid_output = os.path.join(merge_path, "updated_records.mrc")
 invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
-
-"""Determine if the user wants to call all ids, or process existing file"""
 start_fresh = False
-print(
-    "This process can be run with supplied records (calling only missing records) or on an older file of records by calling the ids from scratch."
-)
-print("Re-download records for all ids found? (y/n)")
-response = input()
-if response.lower().startswith("y"):
-    print("Process will download all identified records via the API.")
-    logger.info("Identifying and downloading all records.")
-    start_fresh = True
+
+if downloaded_records:
+    print("Not clearing directory, working with downloaded records.")
 else:
-    print("Process will only call missing Parent records.")
-    logger.info("Processing file with supplied records.")
-    print("Clearing up temporary files.")
-    clear_temporary_files()
+    """Determine if the user wants to call all ids, or process existing file"""
+    print(
+        "This process can be run with supplied records (calling only missing records) or on an older file of records by calling the ids from scratch."
+    )
+    print("Re-download records for all ids found? (y/n)")
+    response = input()
+    if response.lower().startswith("y"):
+        print("Process will download all identified records via the API.")
+        logger.info("Identifying and downloading all records.")
+        start_fresh = True
+    else:
+        print("Process will only call missing Parent records.")
+        logger.info("Processing file with supplied records.")
+        print("Clearing up temporary files.")
+        clear_temporary_files()
 
 # Check only one file in input directory and process.
 for root, dir, files in os.walk(input_path):
@@ -87,7 +93,7 @@ for file in output_list:
         else:
             id_dictionary.update({key: identifiers["parent_many_dict"][key]})
 
-if start_fresh:
+if start_fresh and not downloaded_records:
     # clear directories
     clear_temporary_files()
 
@@ -134,8 +140,21 @@ for key in id_dictionary:
                         ## Now we have both our parent record open and our many record open.
                         try:
                             fix_record = many_record_cleanup(wr, parent_rec)
-                            with open(valid_output, "ab") as output:
-                                output.write(fix_record.as_marc())
+                            has_exception = check_fields(
+                                fix_record,
+                                ("100", "110", "111", "130"),
+                                ("700", "710", "711", "720", "730"),
+                            )
+                            if has_exception:
+                                if p_record["001"].value() not in exceptions:
+                                    exceptions.append(p_record["001"].value())
+                                    with open(invalid_output, "ab") as output:
+                                        output.write(p_record.as_marc())
+                                with open(invalid_output, "ab") as output:
+                                    output.write(fix_record.as_marc())
+                            else:
+                                with open(valid_output, "ab") as output:
+                                    output.write(fix_record.as_marc())
                         except Exception as e:
                             print("Error occurred while transforming file: " + e)
                             logger.error(f"Error occurred while transforming file: {e}")
