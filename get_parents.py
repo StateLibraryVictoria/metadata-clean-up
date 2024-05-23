@@ -42,7 +42,7 @@ else:
     clear_temporary_files()
 
 """Load variables"""
-KEY = os.getenv("PROD_KEY")
+KEY = os.getenv("KEY")
 if len(KEY) < 10:
     raise ValueError("Key is not sufficiently long.")
 
@@ -118,7 +118,7 @@ if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
     try:
-        get_missing_records([], identifiers, output_many, KEY)
+        get_missing_records([], identifiers, output_many)
     except Exception as e:
         print(f"Error retrieving bibs: {e}")
         logger.error(f"Error retrieving bibs: {e}")
@@ -142,7 +142,7 @@ if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
     try:
-        get_missing_records([], parent_id_list, output_many, KEY)
+        get_missing_records([], parent_id_list, output_many)
     except Exception as e:
         print(f"Error retrieving bibs: {e}")
         logger.error(f"Error retrieving bibs: {e}")
