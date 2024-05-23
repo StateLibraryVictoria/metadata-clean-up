@@ -1,5 +1,5 @@
 import os
-from sys import exit
+import sys
 from copy import deepcopy
 import time
 from src.shared_functions import *
@@ -45,6 +45,7 @@ else:
     """Determine if the user wants to call all ids, or process existing file"""
     print(
         "This process can be run with supplied records (calling only missing records) or on an older file of records by calling the ids from scratch."
+        + "\nIf you want to work with existing downloaded records, quit the program and toggle the downloaded_records flag."
     )
     print("Re-download records for all ids found? (y/n)")
     response = input()
@@ -66,7 +67,7 @@ for root, dir, files in os.walk(input_path):
             "No files in input directory. Add files to /input/load/mrc. "
             + "Ending program."
         )
-        exit()
+        sys.exit()
     else:
         print("The following files have been found:")
         for file in output_list:
@@ -74,7 +75,7 @@ for root, dir, files in os.walk(input_path):
         print(f"Continue processing? (y/n)")
         response = input()
         if not response.lower().startswith("y"):
-            exit()
+            sys.exit()
 
 # split the files
 many_records = []
