@@ -400,3 +400,91 @@ def test_replace_tag(input, expected):
     test_field = replace_tag("264", input)
     print(test_field.indicators)
     assert str(test_field) == expected
+
+
+def test_get_date_from_fields():
+    field = Field(
+        tag="260", indicators=[" ", " "], subfields=[Subfield("c", "[1956?]")]
+    )
+    no_date_field = Field(
+        tag="260", indicators=[" ", " "], subfields=[Subfield("c", "not a date")]
+    )
+    g_date = Field(
+        tag="100",
+        indicators=["1", "2"],
+        subfields=[
+            Subfield("a", "London : "),
+            Subfield("b", "Simpkin , Marshal, Hamilton, Kent & Co. ; "),
+            Subfield("g", "[ca. 1880 - ca. 1884]"),
+        ],
+    )
+    new_field = get_date_from_fields([field, no_date_field, g_date])
+    assert new_field == ["[1956?]", "[ca. 1880 - ca. 1884]"]
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        (["1970"], "1970"),
+        (["[ca. 1970]"], "[ca. 1970]"),
+        (["January - June 1970", "1970"], "1970"),
+        (["[197-?]"], "[197-?]"),
+        (["[between 1969 and 1970?]", "10 January 1974 "], "between 1969? and 1974?"),
+        (
+            ["[between 1969 and 1970?]", "10 January 1974 ", "Jan. 1952"],
+            "between 1952? and 1974?",
+        ),
+    ],
+)
+def test_build_date_field(input, expected):
+    output = build_date_field(input)
+    assert output == expected
+
+
+def test_build_date_production():
+    field = Field(tag="260", indicators=[" ", " "], subfields=[Subfield("c", "[1956]")])
+    no_date_field = Field(
+        tag="260", indicators=[" ", " "], subfields=[Subfield("c", "not a date")]
+    )
+    g_date = Field(
+        tag="100",
+        indicators=["1", "2"],
+        subfields=[
+            Subfield("a", "London : "),
+            Subfield("b", "Simpkin , Marshal, Hamilton, Kent & Co. ; "),
+            Subfield("g", "[ca. 1880 - ca. 1884]"),
+        ],
+    )
+    date_production = build_date_production([field, no_date_field, g_date])
+    assert str(date_production) == "=264  \\0$cbetween 1880? and 1956?"
+
+
+@pytest.mark.parametrize(
+    "input_a, input_b, input_c, expected",
+    [
+        (("100", "110", "111", "130"), ("700", "710", "711", "720", "730"), "a", True),
+        (("100", "110", "111", "130"), ("260", "264"), "a", False),
+        (("100", "110", "111", "130"), ("700", "710", "711", "720", "730"), None, True),
+        (("100", "110", "111", "130"), ("700", "710", "711", "720", "730"), "b", False),
+    ],
+)
+def test_check_fields(single_record, input_a, input_b, input_c, expected):
+    single_record.add_ordered_field(
+        pymarc.Field(
+            "710",
+            indicators=[" ", " "],
+            subfields=[
+                Subfield(
+                    code="a", value="Committee for Urban Action (Melbourne, Vic.)"
+                ),
+                Subfield(code="b", value="Something"),
+            ],
+        )
+    )
+    outcome = check_fields(
+        single_record,
+        input_a,
+        input_b,
+        input_c,
+    )
+    assert outcome == expected

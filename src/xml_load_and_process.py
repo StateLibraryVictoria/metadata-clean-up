@@ -459,3 +459,76 @@ def replace_tag(tag, field, indicator1=None, indicator2=None):
         tag=tag, indicators=[indicator1, indicator2], subfields=field.subfields
     )
     return new_field
+
+
+def get_date_from_fields(fields):
+    """Creates a 264$c from list of existing 26x"""
+    date_data = []
+    for field in fields:
+        for subfield in field.subfields:
+            if parse_008_date(subfield.value) is not None:
+                date_data.append(subfield.value)
+    logger.info("Dates identified: " + ", ".join(date_data) + ".")
+    return date_data
+
+
+def build_date_field(date_list):
+    """Creates a date field from a list of dates. If more than one date, creates a between span."""
+    if len(date_list) == 0:
+        return None
+    elif len(date_list) == 1:
+        return date_list[0]
+    else:
+        list_years = []
+        for date in date_list:
+            years = re.findall("\d\d\d\d", date)
+            list_years.extend(years)
+        int_years = []
+        for item in list_years:
+            if int(item) not in int_years:
+                int_years.append(int(item))
+        if len(int_years) == 1:
+            return str(int_years[0])
+        else:
+            int_years.sort()
+            return "between " + str(int_years[0]) + "? and " + str(int_years[-1]) + "?"
+
+
+def build_date_production(fields, ind1=" ", ind2="0"):
+    """Creates a 264 from fields supplied in a record. Default indicators are #0"""
+    dates = get_date_from_fields(fields)
+    date = build_date_field(dates)
+    if date is None:
+        return None
+    field = pymarc.Field(
+        tag="264",
+        indicators=[ind1, ind2],
+        subfields=[pymarc.Subfield(code="c", value=date)],
+    )
+    return field
+
+
+def check_fields(record, tag_list_a, tag_list_b, subfield=None):
+    """Searches for sets of tags on a record and checks if list a matches list b. Option to limit to a subfield."""
+    list_a = record.get_fields(*tag_list_a)
+    list_b = record.get_fields(*tag_list_b)
+    target_fields = [str(x) for x in list_b]
+    positive = False
+    for field in list_a:
+        if subfield == None:
+            match_data = str(field)[8:]
+        else:
+            match_data = field.get(subfield)
+        if match_data == None:
+            return False
+        for item in target_fields:
+            if match_data in item:
+                logger.warning(
+                    f"Warning: Record {record['001'].value()} has matching data for field {str(field)} and matching 7xx {item}"
+                )
+                print(
+                    f"Warning: Record {record['001'].value()} has matching data for field {str(field)} and matching 7xx {item}"
+                )
+                positive = True
+
+    return positive
