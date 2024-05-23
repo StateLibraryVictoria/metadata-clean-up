@@ -38,7 +38,7 @@ downloaded_records = False
 
 # Setup workspace
 setup_directories()
-KEY = os.getenv("PROD_KEY")
+KEY = os.getenv("KEY")
 ROOT_DIR = os.path.abspath(os.curdir)
 
 # Set directories
@@ -75,9 +75,9 @@ for head in headers:
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key(KEY):
+    if check_api_key():
         try:
-            get_missing_records([], identifiers, output_dir_many, KEY)
+            get_missing_records([], identifiers, output_dir_many)
         except Exception as e:
             print(f"Error retrieving bibs: {e}")
             logger.error(f"Error retrieving bibs: {e}")
@@ -101,9 +101,9 @@ unique_parents = parent_df.parent_id.unique().tolist()
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key(KEY):
+    if check_api_key():
         try:
-            get_missing_records([], unique_parents, output_dir_parent, KEY)
+            get_missing_records([], unique_parents, output_dir_parent)
         except Exception as e:
             print(f"Error retrieving bibs: {e}")
             logger.error(f"Error retrieving bibs: {e}")

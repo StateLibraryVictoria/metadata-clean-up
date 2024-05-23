@@ -23,7 +23,10 @@ print("")
 # Setup workspace
 setup_directories()
 
-KEY = os.getenv("PROD_KEY")
+KEY = os.getenv("KEY", None)
+if KEY is None:
+    print("API Key is None. Exiting.")
+    sys.exit()
 output_path = os.path.join("output", "mrc", "split")
 input_path = os.path.join("input", "load", "mrc")
 parent_records_path = os.path.join(output_path, "parent")
@@ -94,14 +97,14 @@ if start_fresh:
     parent_ids = parent_records + parent_ids
 
     # Get many records
-    get_missing_records([], many_records, many_records_path, KEY)
+    get_missing_records([], many_records, many_records_path)
 
 
 parent_ids = list(set(parent_ids))
 parent_ids.sort()
 
 # get required parents
-get_missing_records(parent_records, parent_ids, parent_records_path, KEY)
+get_missing_records(parent_records, parent_ids, parent_records_path)
 
 parent_files = [
     os.path.join(parent_records_path, filename)
@@ -130,18 +133,7 @@ for key in id_dictionary:
                         wr = deepcopy(record)
                         ## Now we have both our parent record open and our many record open.
                         try:
-                            fix_record = big_bang_replace(wr, parent_rec)
-                            fix_record = fix_indicators(fix_record)
-                            fix_record = fix_655_gmgpc(fix_record)
-                            if len(fix_record.get_fields("260")) == 1:
-                                date_field = replace_tag(
-                                    "264",
-                                    fix_record["260"],
-                                    indicator1=" ",
-                                    indicator2="0",
-                                )
-                                fix_record.remove_fields("260")
-                                fix_record.add_ordered_field(date_field)
+                            fix_record = many_record_cleanup(wr, parent_rec)
                             with open(valid_output, "ab") as output:
                                 output.write(fix_record.as_marc())
                         except Exception as e:
