@@ -21,8 +21,24 @@ def many_record_cleanup(many_record, parent_record):
         return many_record
     fix_record = deepcopy(many_record)
     fix_record = big_bang_replace(fix_record, parent_record)
+    """try:
+        date = fix_record["264"]["c"]
+    except KeyError:
+        logger.info(
+            f"Record {fix_record['001'].value()} does not have 264$c. Constructing date of production field based on parameters."
+        )
+        date_fields = fix_record.get_fields("260", "264")
+        logger.info("Record has the following fields:")
+        for field in date_fields:
+            logger.info(str(field))
+        date_production = build_date_production(date_fields)
+        logger.info("New date field: " + str(date_production))
+        fix_record.remove_fields("260", "264")
+        fix_record.add_ordered_field(date_production)"""
     fix_record = fix_indicators(fix_record)
     fix_record = fix_655_gmgpc(fix_record)
+
+    fix_record = replace_many_008_date(fix_record)
     return fix_record
 
 
