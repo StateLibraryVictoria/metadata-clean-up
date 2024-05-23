@@ -163,7 +163,7 @@ def split_marc_records(input_filename):
     return identifiers
 
 
-def get_missing_records(existing_records, request_ids, output_directory, apikey):
+def get_missing_records(existing_records, request_ids, output_directory):
     """Call API process to add missing parent records to existing file.
 
     Args:
@@ -178,10 +178,6 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey)
     logger.debug(f"Number of existing records: {len(existing_records)}")
     logger.debug(f"Number of request ids: {len(request_ids)}")
 
-    if apikey == None:
-        logger.info("No API Key submitted")
-        return None
-
     # Check what identifiers need to be retrieved.
     missing_list = []
     for identifier in request_ids:
@@ -194,9 +190,9 @@ def get_missing_records(existing_records, request_ids, output_directory, apikey)
 
     required = chunk_identifiers(missing_list)
     xml = "<collection>"  # Wraps xml in root element collection
-    if check_api_key(apikey):
+    if check_api_key():
         for key in required:
-            response = get_bibs(key, required[key], apikey)
+            response = get_bibs(key, required[key])
             data = response.json()
             string = json.dumps(data, indent=4)
             bibs = json.loads(string)
