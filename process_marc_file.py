@@ -110,8 +110,9 @@ if start_fresh and not downloaded_records:
 parent_ids = list(set(parent_ids))
 parent_ids.sort()
 
-# get required parents
-get_missing_records(parent_records, parent_ids, parent_records_path)
+if not downloaded_records:
+    # get required parents
+    get_missing_records(parent_records, parent_ids, parent_records_path)
 
 parent_files = [
     os.path.join(parent_records_path, filename)
@@ -146,6 +147,14 @@ for key in id_dictionary:
                                 ("100", "110", "111", "130"),
                                 ("700", "710", "711", "720", "730"),
                             )
+                            if not has_exception:
+                                try:
+                                    record["264"]["c"]
+                                except KeyError:
+                                    has_exception = True
+                                    logger.warning(
+                                        f"Record {record['001'].value()} has no 264$c. Logging to exceptions."
+                                    )
                             if has_exception:
                                 if p_record["001"].value() not in exceptions:
                                     exceptions.append(p_record["001"].value())
