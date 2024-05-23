@@ -159,7 +159,6 @@ def split_marc_records(input_filename):
                 )
             with open(output_file, "wb") as f:
                 f.write(record.as_marc())
-    print(identifiers["parent_many_dict"])
     return identifiers
 
 
