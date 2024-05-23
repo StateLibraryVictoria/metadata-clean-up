@@ -64,6 +64,41 @@ def test_fix_655_gmgpc():
     assert fixed_record.get_fields("655")[0].value() == "Gelatin silver prints. gmgpc"
 
 
+def test_fix_655_gmgpc_x():
+    record = pymarc.Record()
+    record.add_field(
+        pymarc.Field(
+            tag="655",
+            indicators=[" ", "7"],
+            subfields=[
+                pymarc.Subfield("a", "Slides"),
+                pymarc.Subfield("x", "Color."),
+                pymarc.Subfield("2", "gmgpc"),
+            ],
+        )
+    )
+    print(str(record))
+    fixed_record = fix_655_gmgpc(record)
+    assert str(fixed_record["655"]) == "=655  \\7$aSlides$xColor.$2gmgpc"
+
+
+def test_fix_655_aat():
+    record = pymarc.Record()
+    record.add_field(
+        pymarc.Field(
+            tag="655",
+            indicators=[" ", "7"],
+            subfields=[
+                pymarc.Subfield("a", "photographs"),
+                pymarc.Subfield("2", "aat"),
+            ],
+        )
+    )
+    print(str(record))
+    fixed_record = fix_655_gmgpc(record)
+    assert str(fixed_record["655"]) == "=655  \\7$aphotographs$2aat"
+
+
 @pytest.mark.parametrize(
     "input_file, expected",
     [

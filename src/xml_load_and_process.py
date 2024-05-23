@@ -23,7 +23,9 @@ def fix_655_gmgpc(record):
             value = field["a"] if field["2"] == "gmgpc" else ""
 
             if (
-                not value.endswith(".") and "gmgpc" in field["2"]
+                not value.endswith(".")
+                and "gmgpc" in field["2"]
+                and len(field.subfields) == 2  # caveat for gmgpc with $x
             ):  # adds final period to gmgpc if required.
                 field["a"] = value + "."
 
