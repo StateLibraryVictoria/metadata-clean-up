@@ -21,7 +21,7 @@ print("Created log file with title: " + logger_name)
 print("")
 
 # Debugging flag - set to True to work with existing records or False to start from scratch.
-downloaded_records = False
+downloaded_records = True
 
 # Setup workspace
 setup_directories()
@@ -88,8 +88,8 @@ for file in output_list:
     parent_records.extend(identifiers["parent_records"])
     parent_ids.extend(identifiers["parent_ids"])
     for key in identifiers["parent_many_dict"]:
-        if key in id_dictionary:
-            new_list = id_dictionary[key].extend(identifiers["parent_many_dict"][key])
+        if key in id_dictionary.keys():
+            new_list = id_dictionary[key] + identifiers["parent_many_dict"][key]
             id_dictionary.update({key: new_list})
         else:
             id_dictionary.update({key: identifiers["parent_many_dict"][key]})
@@ -147,14 +147,6 @@ for key in id_dictionary:
                                 ("100", "110", "111", "130"),
                                 ("700", "710", "711", "720", "730"),
                             )
-                            if not has_exception:
-                                try:
-                                    record["264"]["c"]
-                                except KeyError:
-                                    has_exception = True
-                                    logger.warning(
-                                        f"Record {record['001'].value()} has no 264$c. Logging to exceptions."
-                                    )
                             if has_exception:
                                 if p_record["001"].value() not in exceptions:
                                     exceptions.append(p_record["001"].value())
