@@ -146,8 +146,10 @@ list_has_037 = []
 match_parent = False
 list_already_present = []
 
+
 # Iterates through rows in dataframe to process files
 for index, row in df_join.iterrows():
+    has_exception = False
     try:
         # Get 037 from parent record if it matches file_label.
         with open(row["parent_file"], "rb") as pf:
@@ -186,9 +188,12 @@ for index, row in df_join.iterrows():
                 for record in reader:
                     fix_record = deepcopy(record)
                     # Cleanup record to replace common fields, fix indicator encoding, etc.
-                    fix_record = big_bang_replace(fix_record, parent_rec)
-                    fix_record = fix_indicators(fix_record)
-                    fix_record = fix_655_gmgpc(fix_record)
+                    fix_record = many_record_cleanup(fix_record, parent_rec)
+                    has_exception = check_fields(
+                        fix_record,
+                        ("100", "110", "111", "130"),
+                        ("700", "710", "711", "720", "730"),
+                    )
                     try:
                         title_950l = normalise_title(fix_record["950"]["l"])
                     except Exception as e:
@@ -219,12 +224,7 @@ for index, row in df_join.iterrows():
                                 logger.info(
                                     f"Record {row['mms_id']} has existing 037: {identifier}. Will not apply file label {row['file_label']}"
                                 )
-                                with open(invalid_output, "ab") as output:
-                                    output.write(parent_rec.as_marc())
-                                    output.write(fix_record.as_marc())
-                                logger.info(
-                                    f"Record written to exceptions file: {invalid_output}"
-                                )
+                                has_exception = True
                         else:
                             identifier_subfield = pymarc.Subfield(
                                 code="a", value=new_label
@@ -251,6 +251,13 @@ for index, row in df_join.iterrows():
                                 )
                                 with open(invalid_output, "ab") as output:
                                     output.write(fix_record.as_marc())
+                        if has_exception:
+                            with open(invalid_output, "ab") as output:
+                                output.write(parent_rec.as_marc())
+                                output.write(fix_record.as_marc())
+                            logger.info(
+                                f"Record written to exceptions file: {invalid_output}"
+                            )
                     except Exception as e:
                         logger.error(
                             f"Error adding 037 {row['file_label']} to record {row['mms_id']}. Error: {e}"
