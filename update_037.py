@@ -30,8 +30,9 @@ def normalise_title(input):
     return output
 
 
-logger = setup_logger("primary_logger", "logs/update_037.log")
+logger = setup_logger(None, "logs/update_037.log")
 logger_2 = setup_logger("name_collision_logger", "logs/name_mismatch_950l.log")
+
 
 # Debugging flag - set to True to work with existing records or False to start from scratch.
 downloaded_records = False
