@@ -21,7 +21,11 @@ print("Created log file with title: " + logger_name)
 print("")
 
 # Debugging flag - set to True to work with existing records or False to start from scratch.
-downloaded_records = True
+downloaded_records = False
+print("Work with downloaded records? (y/n)")
+response = input()
+if response.lower().startswith("y"):
+    downloaded_records = True
 
 # Setup workspace
 setup_directories()
@@ -45,7 +49,6 @@ else:
     """Determine if the user wants to call all ids, or process existing file"""
     print(
         "This process can be run with supplied records (calling only missing records) or on an older file of records by calling the ids from scratch."
-        + "\nIf you want to work with existing downloaded records, quit the program and toggle the downloaded_records flag."
     )
     print("Re-download records for all ids found? (y/n)")
     response = input()
