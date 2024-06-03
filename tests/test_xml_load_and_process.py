@@ -139,7 +139,7 @@ h_field = Field(
 rwp_field = Field(
     tag="037",
     indicators=["", ""],
-    subfields=[Subfield(code="a", value="RWP/A19.13-15")],
+    subfields=[Subfield(code="a", value="rwp/A19.13-15")],
 )
 
 ms_field = Field(
@@ -169,7 +169,7 @@ def test_subfield_is_in_record_range_period():
     record = deepcopy(test_037_range)
     record.add_field(rwp_field)
     returned = subfield_is_in_record(record, "RWP/A19.14", "037", "a")
-    assert returned == "RWP/A19.14"
+    assert returned == "rwp/A19.14"
 
 
 def test_fix_245_indicators(temp_marc_file):
@@ -382,7 +382,7 @@ def test_get_current_008_date_raises_wrong_alignment():
         ("[197-?]", "s197u    "),
         ("[between 1970 and 1974?] ", "q19701974"),
         ("ca. 1970-1974", "q19701974"),
-        ("ca. 1970-ca. 1974", "q19701974"),
+        ("c. 1970-c. 1974", "q19701974"),
         ("1970 or 1974", "q19701974"),
         ("1 Jan. 1970-2 Feb. 1974 ", "q19701974"),
         ("February 23, 1970", "e19700223"),
@@ -390,7 +390,9 @@ def test_get_current_008_date_raises_wrong_alignment():
         ("10 January 1974 ", "e19740110"),
         ("Jan. 1970", "e197001  "),
         ("[ca. 1920 - ca. 1954].", "q19201954"),
-        # ("[1921-23]", "q19211923"),
+        ("[Dec. 19, 1972]", "e19721219"),
+        ("[May 7-8, 1982]", "s1982    "),
+        ("Jan. 18-Feb. 10, 1952", "s1952    "),
     ],
 )
 def test_parse_008_date(input, expected):

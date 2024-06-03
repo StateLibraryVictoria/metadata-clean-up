@@ -403,13 +403,13 @@ def parse_008_date(input):
                 return "s" + stripped_date + "    "
     elif len(stripped_date) == 3 and len(re.sub("\D", "", input)) == 3:
         return "s" + stripped_date + "u    "
+    elif len(years) == 1 and len(stripped_date) <= 8:
+        return "s" + years[0] + "    "
     elif len(stripped_date) == 8 or "between" in input or "or" in input:
         matches = re.findall(year, input)
         return "q" + "".join(matches)
     elif len(years) == 2 and len(stripped_date) > 8:
         return "q" + years[0] + years[1]
-    elif len(years) == 1 and len(stripped_date) < 8:
-        return "s" + years[0] + "    "
     else:
         return None
 
