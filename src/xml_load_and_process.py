@@ -60,11 +60,17 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
             return query
         elif item[subfield].replace(" ", "") == query.replace(" ", ""):
             return item[subfield]
+        elif item[subfield].upper() == query.upper():
+            return item[subfield]
         # 037 case for ranged identifiers
         elif tag == "037" and "-" in item[subfield]:
             identifiers = enumerate_037(item[subfield])
             for id in identifiers:
-                if id == query or id.replace(" ", "") == query.replace(" ", ""):
+                if (
+                    id == query
+                    or id.replace(" ", "") == query.replace(" ", "")
+                    or id.upper() == query.upper()
+                ):
                     return id
         else:
             continue
@@ -72,11 +78,11 @@ def subfield_is_in_record(record, query, tag, subfield, whitespace=True):
     # log failed records and return None
     for item in record.get_fields(tag):
         try:
-            logger.info(
+            logger.debug(
                 f"No match found for {query} in {tag} ${subfield} in record {record['001'].value()}. Record has 037: {item}"
             )
         except Exception as e:
-            print(f"error adding log for failed query search {e}")
+            logger.error(f"Error adding log for failed query search {e}")
     return None
 
 
@@ -369,7 +375,7 @@ def get_current_008_date(input):
 def parse_008_date(input):
     """Parse 008 from input date string. Converts all inclusive dates to questionable."""
     # Regex for stripping or determining a year value
-    circa = "c\.|ca\.|circa|approx\.|approximately"
+    circa = "(?<!e)c\.|ca\.|circa|approx\.|approximately"
     year = "\d\d\d\d"
 
     ## Get dates from String
@@ -402,6 +408,8 @@ def parse_008_date(input):
         return "q" + "".join(matches)
     elif len(years) == 2 and len(stripped_date) > 8:
         return "q" + years[0] + years[1]
+    elif len(years) == 1 and len(stripped_date) < 8:
+        return "s" + years[0] + "    "
     else:
         return None
 
@@ -429,7 +437,7 @@ def replace_many_008_date(record):
             new_008 = parse_008_date(date_string)
             if new_008 == None:
                 logger.info(
-                    f"Unable to parse current 008 from record. Probably invalid for record {record['001'].value()} with 008: {record['008'].value()}. 008 will not be replaced."
+                    f"Unable to parse date from input string. Probably invalid for record {record['001'].value()} with date string: {date_string} and 008: {record['008'].value()}. 008 will not be replaced."
                 )
                 return record
             if len(current_008[6:15]) == len(new_008):
