@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from copy import deepcopy
 from sys import exit
 from src.shared_functions import *
@@ -30,16 +31,31 @@ def normalise_title(input):
     return output
 
 
-logger = setup_logger(None, "logs/update_037.log")
-logger_2 = setup_logger("name_collision_logger", "logs/name_mismatch_950l.log")
-
+timestr = time.strftime("%Y%m%d-%H%M%S")
+logger_name = f"logs/update_037_{timestr}.log"
+logger = setup_logger(None, logger_name, level=logging.INFO)
+logger_2 = setup_logger(
+    "name_collision_logger", "logs/name_mismatch_950l.log", level=logging.DEBUG
+)
+print("Root log file created with name: " + logger_name)
 
 # Debugging flag - set to True to work with existing records or False to start from scratch.
 downloaded_records = False
+print(
+    "Unless you choose to work with downloaded records, all output and temporary files will be deleted."
+)
+print("Work with downloaded records? (y/n)")
+response = input()
+if response.lower().startswith("y"):
+    downloaded_records = True
 
 # Setup workspace
 setup_directories()
+
 KEY = os.getenv("KEY")
+if KEY is None:
+    print("API Key is None. Exiting.")
+    sys.exit()
 ROOT_DIR = os.path.abspath(os.curdir)
 
 # Set directories
@@ -48,7 +64,8 @@ output_dir_parent = os.path.join("output", "mrc", "split", "parent")
 merge_path = os.path.join("output", "mrc", "merge")
 # Set final output files
 valid_output = os.path.join(merge_path, "updated_records.mrc")
-invalid_output = os.path.join(merge_path, "records_with_exceptions.mrc")
+invalid_output = os.path.join(merge_path, "failed_update_records.mrc")
+other_exceptions = os.path.join(merge_path, "other_exceptions.mrc")
 
 # cleanup directories for temporary files
 if downloaded_records:
@@ -65,38 +82,34 @@ df = get_identifiers_from_spreadsheet(location)
 headers = list(df)
 logger.info(f"Loaded dataframe of shape {df.shape}")
 
-# Get list of mms ids from dataframe
-identifiers = []
-for head in headers:
-    if head.startswith("mms_id"):
-        expected = df[head].tolist()
-        identifiers.extend(expected)
 
 # Get MARC record from API
 if downloaded_records:
     print("Not calling API, working with downloaded records.")
 else:
-    if check_api_key():
-        try:
-            get_missing_records([], identifiers, output_dir_many)
-        except Exception as e:
-            print(f"Error retrieving bibs: {e}")
-            logger.error(f"Error retrieving bibs: {e}")
+    # Get list of mms ids from dataframe
+    identifiers = []
+    for head in headers:
+        if head.startswith("mms_id"):
+            expected = df[head].tolist()
+            identifiers.extend(expected)
+
+    if len(identifiers) > 0:
+        if check_api_key():
+            try:
+                get_missing_records([], identifiers, output_dir_many)
+            except Exception as e:
+                print(f"Error retrieving bibs: {e}")
+                logger.error(f"Error retrieving bibs: {e}")
 
 
 # Get PARENT records from API
 record_files = get_callable_files(output_dir_many)
-parent_id_dict = iterate_get_parents(record_files)
-parent_df = pd.DataFrame.from_dict(
-    parent_id_dict, orient="index", columns=["mms_id", "parent_id"]
-)
-parent_cols = list(parent_df)
-parent_df[parent_cols] = parent_df[parent_cols].astype(str)
-parent_df.mms_id = parent_df.mms_id.str.strip()
+parent_id_dict = get_id_dictionary(record_files)
+logger.info(parent_id_dict)
 
 # Create list of ids for API request
-unique_parents = parent_df.parent_id.unique().tolist()
-
+unique_parents = list(parent_id_dict.keys())
 
 # get parents via Alma API
 if downloaded_records:
@@ -110,20 +123,8 @@ else:
             logger.error(f"Error retrieving bibs: {e}")
 
 
-# Add parent ids to df
-df_join = pd.merge(
-    df.assign(mms_id=df.mms_id.astype(str)),
-    parent_df.assign(mms_id=parent_df.mms_id.astype(str)),
-    how="left",
-    on="mms_id",
-)
 # Create columns containing filenames
-df_join["filename"] = (
-    output_dir_many + os.sep + ("record_" + df_join["mms_id"] + ".mrc")
-)
-df_join["parent_file"] = (
-    output_dir_parent + os.sep + ("record_" + df_join["parent_id"] + ".mrc")
-)
+df["filename"] = output_dir_many + os.sep + ("record_" + df["mms_id"] + ".mrc")
 
 """Processing records"""
 
@@ -144,177 +145,136 @@ list_match = []
 exceptions = 0  # unsuccessful matches
 list_not_match = []
 list_has_037 = []
-match_parent = False
+list_name_not_match = []
+
 list_already_present = []
 
-
-# Iterates through rows in dataframe to process files
-for index, row in df_join.iterrows():
-    has_exception = False
-    try:
-        # Get 037 from parent record if it matches file_label.
-        with open(row["parent_file"], "rb") as pf:
+# Iterate through parent dictionary
+for key in unique_parents:
+    if key.startswith("99"):
+        parent_filename = f"record_{key}.mrc"
+        with open(os.path.join(output_dir_parent, parent_filename), "rb") as pf:
             p_reader = pymarc.MARCReader(pf)
-            for record in p_reader:
-                parent_rec = deepcopy(record)
-                # Gets parent title
+            for parent_rec in p_reader:
+                parent_written = False
                 try:
-                    p_title = normalise_title(parent_rec["245"]["a"])
+                    p_title = normalise_title(parent_rec.title)
                 except Exception as e:
                     p_title = None
-                # Gets matching accession number from parent record or returns None
-                new_label = subfield_is_in_record(record, row["file_label"], "037", "a")
-                if new_label is not None:
-                    df_join["file_label"].replace(
-                        row["file_label"], new_label, inplace=True
-                    )
-                    match_parent = True
-                    counter += 1
-                else:
-                    list_not_match.append((row["mms_id"], row["file_label"]))
+                manys = parent_id_dict.get(key)
+                for many in manys:
+                    has_exception = False
                     match_parent = False
-                    with open(invalid_output, "ab") as output:
-                        output.write(
-                            parent_rec.as_marc()
-                        )  # writes parent record to invalid_output file for QA.
-                    logger.info(f"Record written to exceptions file: {invalid_output}")
-    except Exception as e:
-        print(
-            f"Error getting parent 037 using subfield_is_in_record method for record {row}. Error: {e}"
-        )
-    try:
-        if match_parent:
-            with open(row["filename"], "rb") as fh:
-                reader = pymarc.MARCReader(fh)
-                for record in reader:
-                    fix_record = deepcopy(record)
-                    # Cleanup record to replace common fields, fix indicator encoding, etc.
-                    fix_record = many_record_cleanup(fix_record, parent_rec)
-                    has_exception = check_fields(
-                        fix_record,
-                        ("100", "110", "111", "130"),
-                        ("700", "710", "711", "720", "730"),
+                    filename = f"record_{many}.mrc"
+                    # Get the file label from the dataframe
+                    file_label = df.loc[df["mms_id"] == many, "file_label"].values[0]
+                    new_label = subfield_is_in_record(
+                        parent_rec, file_label, "037", "a"
                     )
-                    try:
-                        title_950l = normalise_title(fix_record["950"]["l"])
-                    except Exception as e:
-                        title_950l = None
-                    if p_title is not None and title_950l is not None:
-                        if p_title != title_950l:
-                            logger_2.info(
-                                f"Normalised title comparison failed between: {p_title} and {title_950l} for record {record['001'].value()}"
-                            )
-                    elif title_950l is None:
-                        logger_2.info(
-                            f"950$l not in Many record {record['001'].value()}"
-                        )
-                    try:
-                        # Check for existing 037 and add exception if it exists.
-                        if len(record.get_fields("037")) > 0:
-                            for identifier in record.get_fields("037"):
-                                if identifier.get("a") == row["file_label"]:
-                                    list_already_present.append(
-                                        (row["mms_id"], row["file_label"], identifier)
-                                    )
-                                    with open(valid_output, "ab") as output:
-                                        output.write(fix_record.as_marc())
-                                    continue
-                                list_has_037.append(
-                                    (row["mms_id"], row["file_label"], identifier)
-                                )
-                                logger.info(
-                                    f"Record {row['mms_id']} has existing 037: {identifier}. Will not apply file label {row['file_label']}"
-                                )
-                                has_exception = True
+                    if new_label is None:
+                        parent_accession = parent_rec.get_fields("037")
+                        if len(parent_accession) == 0:
+                            first_record = "No 037"
                         else:
-                            identifier_subfield = pymarc.Subfield(
-                                code="a", value=new_label
-                            )
-                            field_037 = pymarc.Field(
-                                tag="037",
-                                indicators=["\\", "\\"],
-                                subfields=[
-                                    identifier_subfield,
-                                    pymarc.Subfield(
-                                        code="b", value="State Library of Victoria"
-                                    ),
-                                ],
-                            )
-                            fix_record.add_ordered_field(field_037)
-                            list_match.append(row["mms_id"])
+                            first_record = parent_accession[0].get("a")
+                        logger.info(
+                            f"File label match failed - MANY: {many}, "
+                            f"file_label: {file_label}, "
+                            f"parent_id: {parent_rec['001'].value()}, "
+                            f"num_037: {len(parent_accession)}, "
+                            f"data: {first_record}"
+                        )
+                    else:
+                        match_parent = True
+                    with open(os.path.join(output_dir_many, filename), "rb") as fh:
+                        reader = pymarc.MARCReader(fh)
+                        for record in reader:
                             try:
-                                fix_record = replace_many_008_date(fix_record)
-                                with open(valid_output, "ab") as output:
-                                    output.write(fix_record.as_marc())
-                            except ValueError:
-                                logger.warning(
-                                    f"Record {fix_record['001'].value()} has invalid 008. Requires manual check."
+                                w_title = normalise_title(record["950"]["l"])
+                                if p_title is not None and w_title != p_title:
+                                    if record["245"]["a"] not in list_name_not_match:
+                                        list_name_not_match.append(record["950"]["l"])
+                                        logger_2.debug(
+                                            f"Failed title match: MANY 950$l {record['950']['l']} PARENT {parent_rec['245']['a']}"
+                                        )
+                            except Exception as e:
+                                w_title = None
+
+                            wr = deepcopy(record)
+                            try:
+                                fix_record = many_record_cleanup(wr, parent_rec)
+                                has_exception = check_fields(
+                                    fix_record,
+                                    ("100", "110", "111", "130"),
+                                    ("700", "710", "711", "720", "730"),
                                 )
-                                with open(invalid_output, "ab") as output:
-                                    output.write(fix_record.as_marc())
-                        if has_exception:
-                            with open(invalid_output, "ab") as output:
-                                output.write(parent_rec.as_marc())
+                            except Exception as e:
+                                has_exception = True
+                                logger.error(
+                                    f"Error while cleaning MANY record {str(many)} : {e}"
+                                )
+                            if match_parent:
+                                # check for existing 037
+                                if len(record.get_fields("037")) > 0:
+                                    for identifier in record.get_fields("037"):
+                                        if identifier.get("a") == new_label:
+                                            list_already_present.append(
+                                                (many, file_label, identifier)
+                                            )
+                                        list_has_037.append(
+                                            (
+                                                record["001"].value(),
+                                                file_label,
+                                                identifier,
+                                            )
+                                        )
+                                        logger.info(
+                                            f"Record {record['001'].value()} has existing 037: {identifier}. Will not apply file label {file_label}"
+                                        )
+                                        has_exception = True
+                                else:
+                                    identifier_subfield = pymarc.Subfield(
+                                        code="a", value=new_label.upper()
+                                    )
+                                    field_037 = pymarc.Field(
+                                        tag="037",
+                                        indicators=["\\", "\\"],
+                                        subfields=[
+                                            identifier_subfield,
+                                            pymarc.Subfield(
+                                                code="b",
+                                                value="State Library of Victoria",
+                                            ),
+                                        ],
+                                    )
+                                    fix_record.add_ordered_field(field_037)
+                                    list_match.append(
+                                        (
+                                            record["001"].value(),
+                                            file_label,
+                                            parent_rec["001"].value(),
+                                        )
+                                    )
+                            else:
+                                list_not_match.append(
+                                    (
+                                        record["001"].value(),
+                                        file_label,
+                                        parent_rec["001"].value(),
+                                    )
+                                )
+                            if has_exception:
+                                output_file = other_exceptions
+                            elif match_parent:
+                                output_file = valid_output
+                                parent_written = True
+                            else:
+                                output_file = invalid_output
+                            with open(output_file, "ab") as output:
+                                if not parent_written:
+                                    output.write(parent_rec.as_marc())
+                                    parent_written = True
                                 output.write(fix_record.as_marc())
-                            logger.info(
-                                f"Record written to exceptions file: {invalid_output}"
-                            )
-                    except Exception as e:
-                        logger.error(
-                            f"Error adding 037 {row['file_label']} to record {row['mms_id']}. Error: {e}"
-                        )
-                        raise
-        else:  # cleanup and handling for records that don't match parent.
-            logger.info(
-                f"Record {row['mms_id']} accession number {row['file_label']} not in parent record {row['parent_id']}"
-            )
-            with open(row["filename"], "rb") as fh:
-                logger.debug(
-                    f"Checking record {row['mms_id']} which failed check against parent record doesn't have existing 037."
-                )
-                reader = pymarc.MARCReader(fh)
-                for record in reader:
-                    try:
-                        title_950l = normalise_title(fix_record["950"]["l"])
-                    except Exception as e:
-                        title_950l = None
-                    if p_title is not None and title_950l is not None:
-                        if p_title != title_950l:
-                            logger_2.info(
-                                f"Normalised title comparison failed between: {p_title} and {title_950l} for record {record['001'].value()}"
-                            )
-                    elif title_950l is None:
-                        logger_2.info(
-                            f"950$l not in Many record {record['001'].value()}"
-                        )
-                    fix_record = deepcopy(record)
-                    # Cleanup record to replace common fields, fix indicator encoding, etc.
-                    fix_record = big_bang_replace(fix_record, parent_rec)
-                    fix_record = fix_indicators(fix_record)
-                    fix_record = fix_655_gmgpc(fix_record)
-                    # Write record to exceptions file.
-                    with open(invalid_output, "ab") as output:
-                        output.write(fix_record.as_marc())
-                    try:  # Check if record already has 037.
-                        existing_037 = fix_record.get_fields("037")
-                        if len(existing_037) > 0:
-                            for field in existing_037:
-                                logger.info(
-                                    f"Record {row['mms_id']} did not match identifier in parent record"
-                                    + f" also has existing 037 fields.Contains field: {field}"
-                                )
-                        else:
-                            logger.debug("Record doesn't have existing 037.")
-                    except Exception as e:
-                        logger.error(
-                            f"Error checking for existing 037 in record {row['mms_id']}."
-                        )
-                    logger.info(
-                        f"Record {row['mms_id']} written to exceptions file: {invalid_output}"
-                    )
-    except Exception as e:
-        print(f"Error opening file from pandas df: {e}")
-        logger.error(f"Error opening file from pandas df: {e}")
 
 # Checks for items added to both valid and invalid lists
 for item in list_match:
@@ -325,23 +285,21 @@ for item in list_match:
 
 # Print out errors for the operator to handle.
 logger.info("Summary of exceptions")
-for id, acc in list_not_match:
+print(list_not_match)
+for id, acc, p_mmsid in list_not_match:
     print(f"Failed accession record match for {id} with file label: {acc}")
     logger.info(f"Failed accession record match for {id} with file label: {acc}")
 for id, acc, exi in list_has_037:
-    print(
-        f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}"
-    )
     logger.info(
         f"Existing 037 present in record {id} -- Current 037: {exi} -- File label: {acc}"
     )
-print(
+logger.warning(
     "Existing correct 037: "
     + str(len(list_already_present))
     + " records already had correct 037 in record."
 )
 for id, acc, exi in list_already_present:
-    logger.info(
+    logger.debug(
         f"Existing 037 matched record {id} -- Current 037: {exi} -- File label: {acc}"
     )
 
@@ -361,7 +319,16 @@ if os.path.isfile(invalid_output):
         invalid_output, invalid_path, output_filename=invalid_name, merged=True
     )
 else:
-    print("No exceptions written to file.")
+    print("No failed matches written to file.")
+
+# check file exists
+if os.path.isfile(other_exceptions):
+    other_path, other_name = os.path.split(other_exceptions)
+    output_file_with_validation(
+        other_exceptions, other_path, output_filename=other_name, merged=True
+    )
+else:
+    print("No other exceptions written to file.")
 
 # Build archive file of unmodified MANY records.
 output_dir_many
