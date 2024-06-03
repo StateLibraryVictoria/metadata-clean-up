@@ -234,7 +234,7 @@ for key in unique_parents:
                                         has_exception = True
                                 else:
                                     identifier_subfield = pymarc.Subfield(
-                                        code="a", value=new_label.upper()
+                                        code="a", value=new_label
                                     )
                                     field_037 = pymarc.Field(
                                         tag="037",
