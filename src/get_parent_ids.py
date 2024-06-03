@@ -195,13 +195,56 @@ def get_parent_id(pymarc_record):
     """
     try:
         id = pymarc_record["950"]["p"]
+        return id
     except KeyError:
         return None
-    if validate_mmsid(id):
-        return id
-    else:
-        logger.debug(f"Invalid MMS id: {id}")
+
+
+def get_record_type(record):
+    field_956 = record.get("956")
+
+    if field_956 is None:
         return None
+
+    record_type = field_956.get("b")
+    return record_type
+
+
+def get_id_dictionary(filepath_list):
+    """Iterates through .mrc files and adds ids to dictionary.
+    If record has parent Id, uses that as the key, otherwise uses record type from 956$b (ONE|MANY|PARENT)
+    Else uses 'unknown' as key."""
+    id_dict = {}
+
+    if filepath_list == None or len(filepath_list) == 0:
+        logger.info("Iterate get parents failed as filepath list is empty.")
+        return None
+
+    for file in filepath_list:
+        if file.endswith(".mrc"):
+            with open(file, "rb") as fh:
+                reader = pymarc.MARCReader(fh)
+                for record in reader:
+                    id = record["001"].value()
+                    parent_id = get_parent_id(record)
+                    ## Handle cases where there is no parent id
+                    ## Add them to same record type
+                    if parent_id is not None:
+                        category = parent_id
+                    else:
+                        record_type = get_record_type(record)
+                        if record_type is not None:
+                            category = record_type
+                        else:
+                            category = "unknown"
+                    ## Check if key is already in dictionary
+                    existing_data = id_dict.get(category)
+                    if existing_data is not None:
+                        new_list = existing_data + [id]
+                        id_dict.update({category: new_list})
+                    else:
+                        id_dict.update({category: [id]})
+    return id_dict
 
 
 def iterate_get_parents(
