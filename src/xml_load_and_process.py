@@ -436,10 +436,23 @@ def replace_many_008_date(record):
         if date_string is not None:
             new_008 = parse_008_date(date_string)
             if new_008 == None:
-                logger.info(
-                    f"Unable to parse date from input string. Probably invalid for record {record['001'].value()} with date string: {date_string} and 008: {record['008'].value()}. 008 will not be replaced."
-                )
-                return record
+                # check if a date has been transcribed but also translated by cataloguer.
+                if "[" in date_string:
+                    try:
+                        new_date = date_string[
+                            date_string.index("[") : date_string.index("]")
+                        ]
+                        new_008 = parse_008_date(new_date)
+                    except Exception as e:
+                        logger.info(
+                            f"Unable to parse date from input string. Probably invalid for record {record['001'].value()} with date string: {date_string} and 008: {record['008'].value()}. 008 will not be replaced."
+                        )
+                        return record
+                else:
+                    logger.info(
+                        f"Unable to parse date from input string. Probably invalid for record {record['001'].value()} with date string: {date_string} and 008: {record['008'].value()}. 008 will not be replaced."
+                    )
+                    return record
             if len(current_008[6:15]) == len(new_008):
                 current_008 = str.replace(current_008, current_008[6:15], new_008)
                 record.remove_fields("008")
